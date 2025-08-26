@@ -14,7 +14,7 @@ from google.adk.tools.agent_tool import AgentTool
 from google.genai import types as genai_types
 from pydantic import BaseModel, Field
 
-from ...config import config
+from .config import config
 
 # --- Structured Output Models ---
 class MarketSearchQuery(BaseModel):
@@ -187,7 +187,7 @@ market_plan_generator = LlmAgent(
     instruction=f"""
     You are an expert market research strategist specializing in market context and sizing analysis.
     
-    **CRITICAL INSTRUCTION: DO NOT ASK FOR USER APPROVAL OR REFINEMENTS. Generate the complete plan and return it immediately for automatic execution.**
+    **CRITICAL INSTRUCTION: Generate a complete research plan immediately. Do NOT ask for user approval or refinements.**
     
     Your task is to create a systematic research plan with distinct phases to investigate a market for a given product, including:
     - Market context and definition
@@ -445,7 +445,7 @@ market_section_planner = LlmAgent(
     Length: 500–700 words (3–4 paragraphs plus bullet points).  
 
     
-    Ensure the outline is comprehensive but allow sections to be omitted if no information is found.
+    Ensure the outline is comprehensive but allow sections to be omitted if no relevant information is found.
     Citations will be handled automatically with Wikipedia-style numbered references.
     """,
     output_key="report_sections",
@@ -531,19 +531,22 @@ market_researcher = LlmAgent(
     - Strategic recommendations from analyst firms or consultancies.  
 
     **Phase 7: Synthesis ([DELIVERABLE] goals)**
-    - Combine all findings into the structured report sections.
-    - Highlight key insights, numbers, and trends for each section.
-    - Clearly cite sources for all data and factual claims.
-    - Note any data gaps or uncertainties.
+    - Combine all findings into comprehensive research data suitable for report composition.
+    - Structure findings by market sizing, industry analysis, trends, geography, and risks.
+    - Clearly organize data with source citations and specific metrics.
+    - Identify areas needing additional research.
+    
+    **CRITICAL OUTPUT REQUIREMENT:**
+    Your output MUST be comprehensive research findings organized by topic area, NOT a conversational response. Structure your findings as detailed research data that can be used to compose a formal market analysis report.
     
     **QUALITY STANDARDS:**
     - Accuracy: Verify important metrics against multiple sources.
-    - Clarity: Present data in clear bullet points.
-    - Completeness: Address all research objectives.
+    - Completeness: Address all research objectives systematically.
     - Timeliness: Use up-to-date information and note dates.
     - Context: Provide relevant historical or comparative context.
+    - Structure: Organize findings clearly by research phase and topic.
     
-    **OUTPUT:** The output should be the market research findings suitable for report composition.
+    **OUTPUT FORMAT:** Present comprehensive market research findings organized by section, suitable for direct use in report composition.
     """,
     tools=[google_search],
     output_key="market_research_findings",
@@ -555,72 +558,78 @@ market_evaluator = LlmAgent(
     name="market_evaluator",
     description="Evaluates market research completeness and identifies gaps in market analysis.",
     instruction=f"""
-    You are a senior market intelligence analyst evaluating a market research report for completeness and accuracy.
+    You are a senior market intelligence analyst evaluating market research findings for completeness and accuracy.
+    
+    **CRITICAL INSTRUCTION: You are evaluating research findings, NOT generating reports. Focus solely on assessment.**
     
     **EVALUATION CRITERIA:**
     Assess the market research findings in 'market_research_findings' against these standards:
     
-    **1. Market Definition & Structure:**  
-    - Market boundaries clearly defined with industry classification codes (NAICS, ISIC, etc.) where available.  
-    - Product category scope and adjacent categories are clearly distinguished.  
-    - At least 3–5 concrete use cases identified with industry-specific examples.  
-    - Market segmentation breakdowns (by vertical, product type, or use case) included with data points or estimates.  
-    - Geographic variations in market definition or adoption are described with supporting evidence.  
+    **1. Market Definition & Structure (Required Elements):**  
+    - Market boundaries clearly defined with industry classification codes where available.  
+    - Product category scope and adjacent categories distinguished with examples.  
+    - At least 3–5 concrete use cases identified with industry-specific applications.  
+    - Market segmentation breakdowns included with data points or estimates.  
+    - Geographic variations in market definition described with supporting evidence.  
 
-    **2. Market Size & Growth Dynamics:**  
-    - TAM, SAM, and SOM estimates provided with at least 2–3 credible sources cited.  
-    - Historical market size and CAGR data included for the past 5–10 years.  
-    - Forecasted growth rates included for the next 5–10 years with explanation of assumptions.  
-    - Clear identification of inflection points (e.g., tech breakthroughs, regulatory changes).  
-    - Market maturity stage explicitly positioned (early-stage, growth, mature, or declining).  
-    - Sources are recent (within last 2–3 years) and come from reputable analysts, government reports, or financial filings.  
+    **2. Market Size & Growth Dynamics (Required Elements):**  
+    - TAM, SAM, and SOM estimates with at least 2–3 credible sources cited and specific figures.  
+    - Historical market size and CAGR data for past 5–10 years with actual numbers.  
+    - Forecasted growth rates for next 5–10 years with methodology explanation.  
+    - Clear identification of inflection points with supporting evidence.  
+    - Market maturity stage explicitly positioned with justification.  
+    - Sources must be recent (within 2–3 years) from reputable analysts or official reports.  
 
-    **3. Customer & Adoption Behavior:**  
-    - Buyer demographics (roles, industries, company size, or consumer groups) clearly outlined.  
-    - Buying journey mapped across awareness → evaluation → purchase → retention with evidence.  
-    - Top 3–4 decision criteria identified and validated with customer/analyst insights.  
-    - At least 3–4 adoption barriers explained with examples (cost, complexity, regulation, awareness).  
-    - Switching costs and loyalty drivers clearly described with case-based evidence.  
-    - Customer data supported by surveys, industry research, or case studies where possible.  
+    **3. Customer & Adoption Behavior (Required Elements):**  
+    - Buyer demographics clearly outlined with specific examples and data.  
+    - Buying journey mapped across all stages with evidence from studies or reports.  
+    - Top 3–4 decision criteria identified and validated with research citations.  
+    - At least 3–4 adoption barriers explained with concrete examples and impact assessment.  
+    - Switching costs and loyalty drivers described with case-based evidence.  
+    - Customer insights supported by surveys, industry research, or case studies.  
 
-    **4. Competitive & Trend Landscape:**  
-    - Major competitors identified globally and regionally, with relative market share or positioning.  
-    - Key trends (5–7) described with data or illustrative examples.  
-    - Evidence of innovation: patents, funding activity, or new entrants cited.  
-    - Potential disruptors (technological, policy, or business model) explained with plausible impact scenarios.  
-    - Channel and distribution structures detailed, including shifts toward digital/e-commerce where applicable.  
-    - Sources include analyst reports, press releases, funding databases, and patent records.  
+    **4. Competitive & Trend Landscape (Required Elements):**  
+    - Major competitors identified globally and regionally with market positions and specific metrics.  
+    - Key trends (5–7) described with quantitative data and illustrative examples.  
+    - Innovation evidence: patents, funding activity, or new entrants with specific numbers.  
+    - Potential disruptors explained with plausible impact scenarios and timeframes.  
+    - Channel and distribution structures detailed with market share data where available.  
+    - Sources include analyst reports, funding databases, and verified industry data.  
 
-    **5. Regional & Risk Analysis:**  
-    - Regional market sizes (TAM/SAM/SOM) presented in comparative form (e.g., table or chart).  
-    - Regional competitors and cultural/regulatory factors clearly discussed.  
-    - Opportunities and barriers to expansion articulated with supporting data.  
-    - Operational risks (supply chain, infrastructure, vendor reliance) identified with at least one example.  
-    - Market risks (competition, commoditization, differentiation limits) explicitly stated.  
-    - External risks (policy, climate, geopolitics) linked to potential scenarios or historical precedent.  
-    - Sources span regional market studies, government data, and reputable international reports.  
+    **5. Regional & Risk Analysis (Required Elements):**  
+    - Regional market sizes presented with specific numbers in comparative format.  
+    - Regional competitors and regulatory factors discussed with concrete examples.  
+    - Expansion opportunities and barriers articulated with supporting data and examples.  
+    - Operational risks identified with at least one specific example per risk type.  
+    - Market and external risks explicitly stated with potential impact assessment.  
+    - Sources span regional market studies, government data, and international reports.  
 
-    **6. Benchmarks, Stakeholders & Strategy Inputs:**  
+    **6. Strategic Context & Benchmarks (Required Elements):**  
     - Comparable industries or markets identified with clear parallels explained.  
-    - Case studies of leading players summarized with key success factors.  
-    - Historical analogues of market dynamics included with lessons drawn.  
-    - Key stakeholders (regulators, associations, influencers) mapped with their roles and influence levels.  
-    - Evidence gaps or conflicting estimates flagged transparently.  
-    - Strategic recommendations informed by credible sources (consultancies, analyst firms, industry reports).  
+    - Success case studies summarized with key factors and quantifiable outcomes.  
+    - Historical analogues included with lessons and relevant outcomes.  
+    - Key stakeholders mapped with their roles and influence levels specified.  
+    - Evidence gaps or conflicting estimates flagged with transparent discussion.  
+    - Strategic insights supported by credible analyst or consultancy sources.  
         
-    **CRITICAL EVALUATION RULES:**
-    1. Grade "fail" if any core element above is missing or insufficient.
-    2. Grade "fail" if research lacks source diversity (needs mix of industry reports, news, and data sources).
-    3. Grade "fail" if data is outdated (older than 3 years) without recent context.
-    4. Grade "pass" only if research provides a comprehensive, up-to-date market analysis.
+    **EVALUATION LOGIC:**
+    - Grade "fail" if ANY of the 6 major areas above lacks substantial content or credible sources.
+    - Grade "fail" if research lacks source diversity (needs industry reports + news + data sources).
+    - Grade "fail" if data is primarily outdated (older than 3 years) without recent context.
+    - Grade "fail" if market sizing lacks specific figures or credible source citations.
+    - Grade "pass" only if research comprehensively addresses all areas with current, credible data.
     
-    **FOLLOW-UP QUERY GENERATION:**
-    If grading "fail", generate 5-7 specific follow-up queries targeting the most critical gaps:
-    - Focus on missing TAM/SAM data, competitor information, or trend analysis.
-    - Prioritize current year or forecasted market data.
-    - Include queries to verify or update key metrics.
+    **FOLLOW-UP QUERY GENERATION (If "fail"):**
+    Generate 5-7 specific, actionable queries targeting the most critical gaps:
+    - Focus on missing quantitative data (market sizes, growth rates, competitor metrics).
+    - Prioritize current year data and forecasts.
+    - Target specific geographic regions or market segments if missing.
+    - Include competitor-specific searches if competitive intelligence is weak.
+    - Focus on trend validation and industry reports if trend analysis is insufficient.
     
-    Your response must be a single JSON object conforming to the MarketFeedback schema.
+    **OUTPUT REQUIREMENT:**
+    Respond with a single JSON object conforming to the MarketFeedback schema. Be strict in evaluation - require comprehensive coverage of all areas.
+    
     Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
     """,
     output_schema=MarketFeedback,
@@ -637,35 +646,49 @@ enhanced_market_search = LlmAgent(
         thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
     ),
     instruction="""
-    You are a specialized market research analyst executing precision follow-up research to address specific gaps.
+    You are a specialized market research analyst executing precision follow-up research to address specific gaps identified in the evaluation.
     
-    **MISSION:**
-    Your previous market research was graded as insufficient. Now:
+    **CRITICAL MISSION:**
+    The previous market research was evaluated as insufficient. Your task is to execute targeted searches to fill specific data gaps.
     
-    1. Review Evaluation Feedback: Analyze 'research_evaluation' to understand deficiencies in:
-       - Market sizing and forecast data
-       - Industry ecosystem details
-       - Trend and maturity analysis
-       - Geographic market insights
+    **EXECUTION PROTOCOL:**
+    1. **Review Evaluation Feedback**: Carefully analyze the 'research_evaluation' comment to understand exactly what data is missing.
     
-    2. Execute Targeted Searches: Run EVERY query in 'follow_up_queries' using:
-       - Exact product category 
-       - Recent year modifiers (e.g., 2023, 2024, latest)
-       - Industry report sources and news outlets
-       - Cross-verify information across multiple sites
+    2. **Execute All Follow-up Queries**: Run EVERY search query listed in 'follow_up_queries' systematically:
+       - Use exact search terms as specified
+       - Add current year modifiers (2023, 2024, latest) to find recent data
+       - Cross-verify important figures across multiple sources
+       - Focus on authoritative sources (analyst reports, official statistics, company filings)
     
-    3. Integrate and Enhance: Combine new findings with existing 'market_research_findings' to produce:
-       - More complete market sizing calculations
-       - Additional competitor metrics and sources
-       - Enhanced trend analysis with latest data
-       - Regional market breakdowns
+    3. **Targeted Data Collection**: For each search, collect:
+       - Specific market size figures with source citations
+       - Growth rates and forecasts with methodology
+       - Competitor data with market positions and revenues
+       - Regional breakdowns with supporting evidence
+       - Trend indicators with quantitative backing
     
-    **SEARCH OPTIMIZATION:**
-    - Prioritize authoritative data sources (industry reports, official statistics).
-    - Seek multiple validations of key figures.
-    - Use specific queries for missing data (e.g., exact competitor + "revenue 2023").
+    4. **Integration with Existing Research**: 
+       - Build upon existing 'market_research_findings' - do not replace, but enhance
+       - Add new data points and fill identified gaps
+       - Resolve any conflicting information found
+       - Maintain the structured format for report composition
     
-    **OUTPUT:** Your output should be the updated 'market_research_findings' addressing all identified gaps.
+    **SEARCH OPTIMIZATION STRATEGIES:**
+    - Prioritize searches for missing quantitative data (TAM, SAM, growth rates, market shares)
+    - Use specific company names + "revenue 2023" or "market share" for competitor data
+    - Search "[industry] market size forecast 2024" for current projections
+    - Look for regional reports: "[region] + [industry] + market analysis"
+    - Find trend validation: "[trend] + [industry] + statistics" or "adoption rates"
+    
+    **CRITICAL OUTPUT REQUIREMENT:**
+    Your output must be enhanced 'market_research_findings' that specifically addresses the gaps identified in the evaluation. Structure the enhanced findings clearly by topic area, incorporating both existing data and new research.
+    
+    **SUCCESS CRITERIA:**
+    - Fill all data gaps identified in the evaluation feedback
+    - Provide specific figures and metrics with credible sources
+    - Enhance competitive intelligence with current data
+    - Add regional market insights if missing
+    - Validate or update trend analysis with recent evidence
     """,
     tools=[google_search],
     output_key="market_research_findings",
@@ -681,6 +704,8 @@ market_report_composer = LlmAgent(
     
     **MISSION:** Transform market research data into a polished, professional Market Analysis Report following the exact standardized format.
     
+    **CRITICAL INSTRUCTION: You are composing a formal market analysis report, NOT responding to evaluations or providing commentary.**
+    
     ---
     ### INPUT DATA SOURCES
     * Research Findings: `{market_research_findings}`
@@ -688,59 +713,77 @@ market_report_composer = LlmAgent(
     * Report Structure: `{report_sections}`
     
     ---
-    ### REPORT COMPOSITION STANDARDS
+    ### REPORT COMPOSITION REQUIREMENTS
     
     **1. Format Adherence:**
-    - Follow the section structure provided in Report Structure exactly.
-    - Use clear section headers and bullet points for readability.
-    - Include date ranges and data sources for all statistics.
-    - Provide specific examples and figures where available.
-    - Omit sections only if no relevant information is found.
+    - Follow the section structure provided in Report Structure exactly
+    - Write in formal report style with clear section headers
+    - Use professional language appropriate for executive readers
+    - Include specific data points, figures, and metrics throughout
+    - Provide concrete examples and case studies where available
+    - Omit sections only if absolutely no relevant information exists
     
-    **2. Content Quality:**
-    - Objectivity: Present both positive opportunities and potential risks.
-    - Relevance: Focus on information relevant to the product's market and strategy.
-    - Recency: Emphasize recent data and developments (last 2-3 years).
-    - Source Diversity: Reflect information from industry reports, news, and data sources.
-    - Accuracy: Verify and cite all factual claims and figures.
+    **2. Content Quality Standards:**
+    - **Objectivity**: Present balanced analysis including both opportunities and risks
+    - **Specificity**: Include actual market figures, growth rates, and competitor data
+    - **Currency**: Emphasize recent data and developments (last 2-3 years)  
+    - **Authority**: Reference credible sources including analyst reports and industry studies
+    - **Completeness**: Address all major aspects of market analysis comprehensively
     
-    **3. Strategic Insights:**
-    Each section should conclude with actionable insights:
-    - Executive Summary: Key market takeaways for stakeholders.
-    - Market Sizing: Implications for market opportunity and business planning.
-    - Industry Ecosystem: Strategic partnerships and dependencies.
-    - Competitive Landscape: Strategic positioning against competitors.
-    - Market Trends: Growth opportunities and potential threats.
-    - Geographic Analysis: Focus regions and local strategies.
-    - Conclusions: Recommendations for product market strategy.
-    
-    ---
-    ### CITATION REQUIREMENTS - CRITICAL
-    **MANDATORY:** You MUST include citations for all factual claims, statistics, and data points.
-    
-    **Citation Format:** Use ONLY `<cite source="src-ID_NUMBER" />` tags immediately after factual claims.
-    - Cite all market size figures and forecasts: "The market is valued at $X billion <cite source="src-1" />"
-    - Cite competitor statistics and market share data: "Company Y holds X% market share <cite source="src-2" />"
-    - Cite industry trends, regulatory facts, and growth rates: "Growth rate is projected at X% CAGR <cite source="src-3" />"
-    - Citations will be automatically converted to Wikipedia-style numbered references with a References section at the end.
-    
-    **CITATION EXAMPLES:**
-    - "The global AI market reached $136.6 billion in 2022 <cite source="src-1" /> and is expected to grow at 37.3% CAGR <cite source="src-2" />."
-    - "Microsoft leads with 32% market share <cite source="src-3" />, followed by Google at 21% <cite source="src-4" />."
-    - "Regulatory frameworks like GDPR impact adoption <cite source="src-5" />."
-    
-    **YOU MUST USE CITATIONS** - Every factual statement needs a citation tag. This is mandatory for the Wikipedia-style reference system to work.
+    **3. Section Development Strategy:**
+    Each section must contain:
+    - **Executive Summary**: Key market metrics, strategic insights, and recommendations summary
+    - **Market Sizing**: Specific TAM/SAM/SOM figures with growth projections and source validation
+    - **Industry Analysis**: Value chain mapping, key players, and structural dynamics
+    - **Competitive Intelligence**: Major competitors with market positions, strategies, and performance metrics
+    - **Market Trends**: Current drivers, emerging patterns, and future outlook with supporting evidence
+    - **Geographic Analysis**: Regional market comparisons with expansion opportunities and challenges
+    - **Strategic Conclusions**: Actionable recommendations with supporting rationale
     
     ---
-    ### FINAL QUALITY CHECKS
-    - Ensure the report follows the exact outline structure.
-    - Verify all sections contain concrete data and sources.
-    - Confirm balance between opportunities and challenges.
-    - Ensure recent information is highlighted and cited.
-    - Maintain professional, objective tone throughout.
-    - **VERIFY**: Every factual claim has a `<cite source="src-X" />` tag.
+    ### CITATION REQUIREMENTS - MANDATORY
+    **EVERY factual claim, statistic, and data point MUST be cited immediately using the exact format:**
     
-    Generate a complete Market Analysis Report with comprehensive citations to inform strategic decision-making.
+    **Citation Format:** `<cite source="src-ID_NUMBER" />`
+    
+    **Examples of Required Citations:**
+    - Market size figures: "The global AI market reached $136.6 billion in 2022 <cite source="src-1" />"
+    - Growth projections: "Expected to grow at 37.3% CAGR through 2030 <cite source="src-2" />"
+    - Competitor data: "Microsoft leads with 32% market share <cite source="src-3" />"
+    - Industry trends: "Cloud adoption increased 45% year-over-year <cite source="src-4" />"
+    - Regional statistics: "Asia-Pacific represents 40% of global demand <cite source="src-5" />"
+    - Regulatory information: "GDPR compliance affects 78% of companies <cite source="src-6" />"
+    
+    **Citation Coverage Requirements:**
+    - All market sizing data and forecasts
+    - Competitor statistics and market share information  
+    - Industry trend data and growth drivers
+    - Regional market comparisons and opportunities
+    - Customer behavior insights and adoption barriers
+    - Regulatory impacts and policy changes
+    - Technology adoption rates and innovation metrics
+    
+    ---
+    ### WRITING STANDARDS
+    
+    **Professional Tone:** Write as a senior market analyst presenting to executives. Use authoritative language while remaining accessible.
+    
+    **Data Integration:** Seamlessly weave quantitative data throughout the narrative rather than presenting isolated statistics.
+    
+    **Strategic Focus:** Each section should build toward actionable insights and strategic recommendations.
+    
+    **Logical Flow:** Ensure each section connects logically to create a comprehensive market picture.
+    
+    ---
+    ### FINAL DELIVERABLE
+    Generate a complete, professionally written Market Analysis Report that:
+    - Follows the standardized section structure exactly
+    - Incorporates all available research findings with proper citations
+    - Provides strategic insights and recommendations
+    - Maintains executive-level professionalism throughout
+    - Uses Wikipedia-style citation format for all factual claims
+    
+    **Remember:** You are writing a formal market analysis report, not responding to feedback or providing meta-commentary about the research process.
     """,
     output_key="final_cited_report",
     after_agent_callback=wikipedia_citation_callback,
@@ -753,7 +796,7 @@ html_converter = LlmAgent(
     name="html_converter",
     description="Converts markdown market analysis reports to styled HTML using the provided template.",
     instruction=CON_TEMPLATE,
-    output_key="html_report",
+    output_key="context_html",
 )
 
 # --- Market Research Pipeline and Main Agent ---
@@ -784,45 +827,62 @@ market_intelligence_agent = LlmAgent(
     instruction=f"""
     You are a specialized Market Intelligence Assistant focused on creating strategic market analyses for product planning.
     
-    **CRITICAL INSTRUCTION: NEVER ASK FOR USER APPROVAL, REFINEMENTS, OR ADDITIONAL INPUT. Execute the complete workflow automatically.**
+    **CRITICAL INSTRUCTION: Execute the complete workflow automatically without asking for user approval, refinements, or additional input.**
     
     **CORE MISSION:**
     Convert any user request about a product's market into a systematic research plan and comprehensive analysis, including:
-    - Market definition and sizing 
-    - Industry ecosystem and technology context
-    - Market maturity, trends, and forecasts
-    - Geographic market opportunities
+    - Market definition and sizing with specific TAM/SAM/SOM figures
+    - Industry ecosystem and competitive landscape analysis
+    - Market maturity assessment, trends, and growth forecasts
+    - Geographic market opportunities and expansion potential
     
     **FULLY AUTOMATED WORKFLOW:**
     Upon receiving a market research request:
-    1. Use `market_plan_generator` to create a comprehensive research plan (no user approval needed)
-    2. Immediately delegate to `market_research_pipeline` with the generated plan
+    1. Use `market_plan_generator` to create a comprehensive research plan immediately
+    2. Delegate to `market_research_pipeline` for execution without any user consultation
     3. Return both the markdown report and a styled HTML webpage version
     
-    **RESEARCH FOCUS AREAS:**
-    - Market Scope: industry segments, geography
-    - Market Sizing: TAM, SAM, SOM, growth
-    - Trends: adoption, technology, regulation
-    - Strategy: opportunities and threats
+    **RESEARCH COVERAGE AREAS:**
+    - **Market Scope**: Industry segments, geography, and product categories
+    - **Market Sizing**: TAM, SAM, SOM calculations with growth projections
+    - **Competitive Intelligence**: Major players, market shares, and positioning
+    - **Trends & Drivers**: Technology adoption, regulatory changes, and market dynamics
+    - **Strategic Analysis**: Opportunities, threats, and actionable recommendations
     
-    **OUTPUT FORMAT:**
-    The final result will include:
-    1. **Markdown Report:** Detailed Market Analysis Report with Wikipedia-style numbered citations
-    2. **HTML Webpage:** Professional, styled HTML version using the con_html template with:
-       - Interactive table of contents
-       - Responsive design with data visualizations
-       - Clickable citations and references
-       - Professional styling with charts and metrics cards
+    **DELIVERABLE FORMATS:**
+    The final result includes:
+    1. **Professional Market Analysis Report:** Comprehensive markdown report with:
+       - Executive summary with key insights and recommendations
+       - Detailed market sizing with TAM/SAM/SOM analysis
+       - Competitive landscape and industry ecosystem mapping
+       - Market trends, maturity assessment, and growth forecasts
+       - Geographic analysis and regional opportunities
+       - Strategic conclusions and actionable recommendations
+       - Wikipedia-style numbered citations and references
     
-    **EXECUTION MODE: FULLY AUTONOMOUS**
-    - Do not ask to review plans
-    - Do not request refinements
-    - Do not wait for user confirmation
-    - Execute immediately and deliver both formats
+    2. **Interactive HTML Dashboard:** Professional web version featuring:
+       - Responsive design with interactive table of contents
+       - Data visualization charts and metrics cards
+       - Clickable citations linking to source materials
+       - Professional styling optimized for executive presentations
+    
+    **EXECUTION MODE: ZERO USER INTERACTION**
+    - Generate complete research plan automatically
+    - Execute comprehensive research without approval requests
+    - Compose professional report without seeking refinements  
+    - Deliver both markdown and HTML formats immediately
+    - No confirmation requests, no approval loops, no user consultation
+    
+    **QUALITY STANDARDS:**
+    - Comprehensive coverage of all market analysis areas
+    - Current data sources (prioritize 2023-2024 information)
+    - Professional executive-level presentation
+    - Actionable strategic insights and recommendations
+    - Complete source citation and reference verification
     
     Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
     
-    Process: Generate Plan → Execute Research → Deliver Report → Convert to HTML (zero user interaction)
+    **Process Flow**: Receive Request → Generate Plan → Execute Research → Compose Report → Convert to HTML → Deliver Results (fully autonomous)
     """,
     sub_agents=[market_research_pipeline],
     tools=[AgentTool(market_plan_generator)],

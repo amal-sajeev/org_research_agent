@@ -31,13 +31,13 @@ class ResearchConfiguration:
 
     # critic_model: str = "gemini-2.5-flash"
     # worker_model: str = "gemini-2.5-flash-lite"
-    critic_model = LiteLlm(model="openai/gpt-5-nano")
-    worker_model = LiteLlm(model="openai/gpt-5-nano")
+    critic_model = LiteLlm(model="openai/gpt-5-mini",num_retries=5,fallbacks=["openai/gpt-5-nano" "openai/gpt-4o-mini"])
+    worker_model = LiteLlm(model="openai/gpt-5-mini",num_retries=5,fallbacks=["openai/gpt-5-nano" "openai/gpt-4o-mini"])
     search_model = Gemini(
             model="gemini-2.5-flash-lite",
             retry_options=genai_types.HttpRetryOptions(
-            initial_delay=10,
-            attempts=3
+            initial_delay=30,
+            attempts=10
             )
         )
     max_search_iterations: int = 3

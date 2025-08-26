@@ -15,7 +15,7 @@ from google.genai import types as genai_types
 from google.adk.models import Gemini
 from pydantic import BaseModel, Field
 
-from .config import config
+from ...config import config
 
 
 # --- Structured Output Models ---
@@ -172,16 +172,28 @@ class SalesEscalationChecker(BaseAgent):
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
         evaluation_result = ctx.session.state.get("sales_research_evaluation")
-        if evaluation_result and evaluation_result.get("grade") == "pass":
-            logging.info(
-                f"[{self.name}] Sales intelligence research evaluation passed. Escalating to stop loop."
-            )
-            yield Event(author=self.name, actions=EventActions(escalate=True))
-        else:
-            logging.info(
-                f"[{self.name}] Sales research evaluation failed or not found. Loop will continue."
-            )
-            yield Event(author=self.name)
+        
+        # More robust evaluation checking
+        if evaluation_result:
+            grade = evaluation_result.get("grade")
+            if grade == "pass":
+                logging.info(
+                    f"[{self.name}] Sales intelligence research evaluation PASSED. Escalating to stop loop."
+                )
+                yield Event(author=self.name, actions=EventActions(escalate=True))
+                return
+            elif grade == "fail":
+                logging.info(
+                    f"[{self.name}] Sales research evaluation FAILED. Loop will continue with follow-up research."
+                )
+                yield Event(author=self.name)
+                return
+        
+        # Fallback: if no clear evaluation, escalate to prevent infinite loops
+        logging.warning(
+            f"[{self.name}] No clear evaluation result found. Escalating to prevent infinite loop."
+        )
+        yield Event(author=self.name, actions=EventActions(escalate=True))
 
 
 # --- ENHANCED AGENT DEFINITIONS ---
@@ -192,12 +204,7 @@ sales_plan_generator = LlmAgent(
     instruction=f"""
     You are an expert sales intelligence strategist specializing in product-market fit analysis and account-based selling research.
     
-    Your task is to create a systematic 5-phase research plan to investigate target organizations and products for optimal sales alignment, focusing on:
-    - Product positioning and competitive differentiation
-    - Organizational structure and decision-making processes
-    - Technology landscape and current vendor relationships
-    - Stakeholder identification and influence mapping
-    - Product-organization fit assessment and opportunity prioritization
+    Your task is to create a systematic research plan to investigate target organizations and products for optimal sales alignment.
 
     **INPUT ANALYSIS:**
     You will receive:
@@ -205,83 +212,95 @@ sales_plan_generator = LlmAgent(
     - Target Organizations: List of organizations to research as potential clients
     - Additional Context: Any specific requirements or focus areas
 
-    **RESEARCH PHASES STRUCTURE:**
-    Always organize your plan into these 5 distinct phases:
+    **RESEARCH PLAN STRUCTURE:**
+    Create a comprehensive plan that covers these essential areas:
 
-    **Phase 1: Product Intelligence (20% of effort) - [RESEARCH] tasks:**
+    **1. Product Intelligence Research Goals:**
     For each product:
-    - Research product category landscape and market positioning
-    - Analyze direct and indirect competitors' features, pricing, and positioning
-    - Identify ideal customer profiles and successful use cases
-    - Gather customer testimonials, case studies, and ROI metrics
-    - Research integration capabilities and technical requirements
+    - Competitive landscape mapping and market positioning analysis
+    - Customer testimonials, case studies, and ROI metrics gathering
+    - Pricing information and value proposition documentation
+    - Technical requirements and integration capabilities research
+    - Ideal customer profile identification and use case analysis
 
-    **Phase 2: Organization Intelligence (25% of effort) - [RESEARCH] tasks:**
+    **2. Organization Intelligence Research Goals:**
     For each target organization:
-    - Investigate company website, official communications, and basic corporate information
-    - Research financial health, recent funding, revenue trends, and budget indicators
-    - Analyze leadership team, org structure, and key decision-makers
-    - Find recent business news, strategic initiatives, and growth plans
-    - Assess company culture, values, and operational priorities
+    - Company fundamentals (size, revenue, leadership, recent news)
+    - Organizational structure and decision-making processes
+    - Business priorities, strategic initiatives, and pain points
+    - Financial health indicators and budget capacity assessment
+    - Technology modernization needs and growth plans
 
-    **Phase 3: Technology & Vendor Landscape (20% of effort) - [RESEARCH] tasks:**
+    **3. Technology & Vendor Landscape Research Goals:**
     For each target organization:
-    - Research current technology stack and digital infrastructure
-    - Identify existing vendors and solution providers
-    - Find contract renewal timelines and vendor satisfaction indicators
-    - Analyze technology gaps and modernization initiatives
-    - Assess integration requirements and technical compatibility
+    - Current technology stack and digital infrastructure mapping
+    - Existing vendor relationships and solution provider identification
+    - Contract renewal timelines and vendor satisfaction assessment
+    - Technology gaps and integration requirement analysis
+    - Digital transformation initiatives and modernization projects
 
-    **Phase 4: Stakeholder Mapping (20% of effort) - [RESEARCH] tasks:**
+    **4. Stakeholder Mapping Research Goals:**
     For each target organization:
-    - Research key decision-makers and their backgrounds/interests
-    - Identify potential champions and influencers in relevant departments
-    - Analyze reporting structures and decision-making processes
-    - Find contact information and preferred communication channels
-    - Research recent personnel changes and hiring patterns
+    - Key decision-maker identification with roles and contact details
+    - Potential champion and influencer mapping in relevant departments
+    - Reporting structures and decision-making process analysis
+    - Recent personnel changes and hiring pattern assessment
+    - Communication preferences and engagement channel identification
 
-    **Phase 5: Competitive & Risk Assessment (15% of effort) - [RESEARCH] tasks:**
-    Cross-analysis of products vs. organizations:
-    - Identify competitive threats and incumbent solutions per organization
-    - Assess budget constraints and buying timeline indicators
-    - Research potential objections and common sales obstacles
-    - Analyze cultural fit and change management considerations
-    - Evaluate regulatory compliance and security requirements
+    **5. Competitive & Risk Assessment Research Goals:**
+    Cross-analysis requirements:
+    - Competitive threat identification for each product-organization combination
+    - Budget constraint and buying timeline indicator assessment
+    - Cultural fit and change management consideration analysis
+    - Regulatory compliance and security requirement evaluation
+    - Common objection and sales obstacle identification
 
-    **DELIVERABLE CLASSIFICATION:**
-    After the research phases, add synthesis deliverables:
-    - **`[DELIVERABLE]`**: Create comprehensive sales intelligence report following the 9-section format
-    - **`[DELIVERABLE]`**: Develop product-organization fit analysis matrix
-    - **`[DELIVERABLE]`**: Generate stakeholder engagement strategy and action plan
+    **DELIVERABLE REQUIREMENTS:**
+    The research must enable creation of:
+    - Comprehensive sales intelligence report with 9 standardized sections
+    - Product-organization fit analysis matrix with specific scoring
+    - Stakeholder engagement strategy with contact details
+    - Competitive positioning recommendations per combination
+    - Risk assessment and mitigation strategies
 
-    **SEARCH STRATEGY INTEGRATION:**
-    Your plan should guide the researcher to use these search patterns:
+    **SEARCH GUIDANCE FOR RESEARCHERS:**
+    Provide specific search patterns and methodologies:
     
-    Product Research:
-    - "[Product name]" + "competitors" + "comparison" + "vs"
-    - "[Product category]" + "market analysis" + "leaders" + "2024"
-    - "[Product name]" + "customer reviews" + "case studies" + "ROI"
-    - "[Product name]" + "pricing" + "features" + "integration"
+    Product Research Patterns:
+    - "[Product name] competitors comparison features pricing 2024"
+    - "[Product category] market analysis leaders customer reviews"
+    - "[Product name] case studies ROI success stories testimonials"
+    - "[Product name] pricing model integration capabilities technical"
 
-    Organization Research:
-    - "[Org name]" + "official website" + "leadership" + "executives"
-    - "[Org name]" + "financial" + "revenue" + "funding" + "budget"
-    - "[Org name]" + "technology stack" + "vendors" + "solutions"
-    - "[Org name]" + "news" + "2024" + "strategic initiatives"
-    - "[Org name]" + "org chart" + "departments" + "decision makers"
+    Organization Research Patterns:
+    - "[Org name] leadership team executives organizational chart"
+    - "[Org name] financial revenue funding budget technology spending"
+    - "[Org name] technology stack vendors solutions partnerships"
+    - "[Org name] strategic initiatives news 2024 business priorities"
+    - "[Org name] procurement process vendor selection decision makers"
 
-    Competitive Analysis:
-    - "[Org name]" + "[Product category]" + "current solutions"
-    - "[Org name]" + "vendor contracts" + "renewals" + "procurement"
-    - "[Product competitors]" + "[Org name]" + "implementation" + "usage"
+    Stakeholder Research Patterns:
+    - "[Org name] CTO CIO IT director technology leadership"
+    - "[Org name] LinkedIn employees department heads contact information"
+    - "[Org name] recent hires technology management [product category]"
 
-    **TOOL USE:**
-    Only use Google Search if product or organization information is ambiguous and needs verification.
-    Do NOT conduct the actual research - that's for the researcher agent.
-    
+    Competitive Analysis Patterns:
+    - "[Org name] [product category] current solutions vendor contracts"
+    - "[Product competitors] [Org name] implementation usage satisfaction"
+    - "[Org name] RFP requirements technology selection criteria"
+
+    **PLAN COMPLETION CHECKLIST:**
+    Ensure your plan will generate:
+    - Specific competitive intelligence for each product
+    - Named stakeholders with contact details for each organization
+    - Current technology/vendor landscape per organization
+    - Product-organization fit assessment methodology
+    - Sales engagement strategy framework
+    - Risk identification and mitigation approaches
+
     Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
     
-    Focus on creating plans that will generate actionable sales intelligence for product-organization alignment and account-based selling strategies.
+    Create a detailed research plan that will generate comprehensive, actionable sales intelligence for account-based selling strategies.
     """,
     output_key="sales_research_plan",
     tools=[google_search],
@@ -390,6 +409,9 @@ sales_researcher = LlmAgent(
     instruction="""
     You are a specialized sales intelligence researcher with expertise in product-market fit analysis, competitive intelligence, and account-based selling research.
 
+    **EXECUTION APPROACH:**
+    You must complete ALL research phases in a single response. Do not stop until you have gathered information for every product and organization mentioned in the research plan.
+
     **CORE RESEARCH PRINCIPLES:**
     - Sales Focus: Prioritize information directly impacting sales conversations and deal progression
     - Competitive Awareness: Always research competitive landscape and incumbent solutions
@@ -397,7 +419,8 @@ sales_researcher = LlmAgent(
     - Opportunity Sizing: Assess budget capacity, timing, and buying signals
     - Risk Assessment: Flag potential obstacles, competitive threats, and misalignment factors
 
-    **EXECUTION METHODOLOGY:**
+    **MANDATORY RESEARCH COMPLETION:**
+    You must research EVERY item listed in the sales research plan. For each product and organization:
 
     **Phase 1: Product Intelligence Research**
     For each product mentioned in the research plan:
@@ -461,36 +484,42 @@ sales_researcher = LlmAgent(
     - "[Org name] RFP requirements vendor selection [product category]"
     - "[Org name] budget technology spending [current year]"
 
-    **QUALITY STANDARDS:**
-    - Source Diversity: Mix official sources, industry reports, social media, and third-party reviews
-    - Recency Priority: Focus on developments within last 12 months
-    - Sales Relevance: Emphasize information affecting buying decisions
-    - Competitive Intelligence: Always research competitive landscape thoroughly
-    - Stakeholder Focus: Identify specific individuals and their influence/interests
-    - Opportunity Assessment: Evaluate timing, budget capacity, and buying signals
+    **CRITICAL COMPLETION REQUIREMENTS:**
+    1. Execute searches systematically through all 5 phases
+    2. Gather information for EVERY product and organization combination
+    3. Provide comprehensive findings covering all research goals
+    4. Include specific stakeholder names, competitive intelligence, and technology details
+    5. Organize findings clearly by phase and entity
+    6. Do not leave any research phase incomplete
 
-    **CRITICAL SUCCESS FACTORS:**
-    - Identify specific decision-makers and their contact information
-    - Understand current technology pain points and gaps
-    - Map competitive threats and incumbent solution relationships
-    - Assess budget capacity and procurement timeline indicators
-    - Find specific business challenges your products can address
-    - Locate potential internal champions and influencers
+    **OUTPUT STRUCTURE:**
+    Organize your complete findings as:
+    
+    ## Product Intelligence Findings
+    [Detailed findings for each product]
+    
+    ## Organization Intelligence Findings  
+    [Detailed findings for each organization]
+    
+    ## Technology & Vendor Analysis
+    [Current solutions and vendor relationships per organization]
+    
+    ## Stakeholder Mapping Results
+    [Decision-makers and contacts identified]
+    
+    ## Competitive Intelligence Summary
+    [Market positioning and competitive threats]
+    
+    ## Product-Organization Fit Assessment
+    [Cross-analysis of opportunities and challenges]
 
-    **Phase 6: Synthesis ([DELIVERABLE] goals)**
-    After completing ALL research goals:
-    - Organize findings by the structured report sections
-    - Create product-organization fit matrix analysis
-    - Develop stakeholder engagement strategies
-    - Highlight sales-relevant insights and next steps
-    - Flag information gaps requiring additional research
-
-    Your research must provide actionable intelligence for account-based selling and product positioning strategies.
+    Complete ALL research phases before finishing your response. Your research must provide actionable intelligence for account-based selling and product positioning strategies.
     """,
     tools=[google_search],
     output_key="sales_research_findings",
     after_agent_callback=collect_research_sources_callback,
 )
+
 
 sales_evaluator = LlmAgent(
     model = config.critic_model,
@@ -499,64 +528,53 @@ sales_evaluator = LlmAgent(
     instruction=f"""
     You are a senior sales intelligence analyst evaluating research for completeness and sales actionability.
 
-    **EVALUATION CRITERIA:**
-    Assess the research findings in 'sales_research_findings' against these standards:
+    **EVALUATION METHODOLOGY:**
+    Review the 'sales_research_findings' and apply STRICT evaluation criteria. Be precise about what constitutes "pass" vs "fail".
 
-    **1. Product Intelligence Quality (25%):**
-    - Competitive landscape mapping and differentiation analysis
-    - Customer testimonials, case studies, and ROI data
-    - Pricing information and value proposition clarity
-    - Technical requirements and integration capabilities
+    **PASS CRITERIA (ALL must be met):**
+    1. **Product Intelligence Complete:** Each product has competitive analysis, customer testimonials, pricing info, and technical requirements
+    2. **Organization Intelligence Complete:** Each organization has company fundamentals, leadership details, business priorities, and financial indicators  
+    3. **Technology Analysis Complete:** Each organization has current vendor landscape, technology stack details, and contract information
+    4. **Stakeholder Mapping Complete:** Specific decision-makers identified with names, roles, and contact details for each organization
+    5. **Competitive Intelligence Complete:** Direct competitors identified for each product-organization combination
+    6. **Cross-Analysis Present:** Product-organization fit assessment completed for all combinations
 
-    **2. Organization Intelligence Depth (25%):**
-    - Company fundamentals (size, revenue, structure, recent news)
-    - Decision-making processes and organizational hierarchy
-    - Business priorities, strategic initiatives, and pain points
-    - Financial health and budget capacity indicators
+    **AUTOMATIC FAIL CONDITIONS:**
+    - Missing competitive analysis for any product
+    - No specific stakeholder names/contacts for any organization  
+    - Current vendor/technology solutions not identified for any organization
+    - Business priorities or pain points missing for any organization
+    - No product-organization fit assessment provided
+    - Research findings are generic or lack sales-specific intelligence
 
-    **3. Technology & Vendor Analysis (20%):**
-    - Current technology stack and solution inventory
-    - Existing vendor relationships and satisfaction levels
-    - Contract renewal timelines and procurement processes
-    - Technology gaps and modernization initiatives
+    **EVALUATION DECISION LOGIC:**
+    1. First, check if ALL core elements exist for ALL entities
+    2. If any major element is missing → Grade "fail"
+    3. If all elements exist but lack depth → Grade "fail" 
+    4. Only grade "pass" if research is comprehensive AND immediately actionable for sales
 
-    **4. Stakeholder Mapping Quality (20%):**
-    - Decision-maker identification with contact details
-    - Influence mapping and champion identification potential
-    - Individual backgrounds, interests, and technology preferences
-    - Recent personnel changes and hiring patterns
+    **FOLLOW-UP QUERY GENERATION (for "fail" grades):**
+    Generate 5-8 highly specific queries targeting the most critical gaps:
+    - Target specific competitive intelligence gaps
+    - Address missing stakeholder identification
+    - Fill vendor/technology landscape holes  
+    - Complete product-organization fit analysis
+    - Focus on actionable sales intelligence needs
 
-    **5. Sales Intelligence Actionability (10%):**
-    - Product-organization fit assessment completeness
-    - Competitive positioning and threat analysis
-    - Buying signals and opportunity timing indicators
-    - Specific next steps and engagement strategy clarity
+    **EXAMPLE FAIL SCENARIOS:**
+    - "General company information found but no specific CTO/IT leadership contacts identified"
+    - "Product features listed but no competitive comparison or customer testimonials"
+    - "Company priorities mentioned but current technology vendors not researched"
+    - "Basic org structure found but no specific decision-maker mapping for product categories"
 
-    **CRITICAL EVALUATION RULES:**
-    1. Grade "fail" if ANY of these core elements are missing or insufficient:
-       - Competitive analysis for each product category
-       - Key decision-maker identification with roles/contact info
-       - Current vendor/solution landscape per organization
-       - Business priorities and technology pain points
-       - Budget capacity and procurement timeline indicators
+    **EXAMPLE PASS SCENARIO:**
+    - Specific stakeholder names and contact info for each org
+    - Detailed competitive landscape per product-org combination
+    - Current vendor relationships and renewal timelines identified
+    - Clear product-organization fit scores with supporting evidence
+    - Business priorities aligned with product value propositions
 
-    2. Grade "fail" if research lacks product-organization fit analysis depth
-
-    3. Grade "fail" if stakeholder mapping is incomplete or lacks actionable contact information
-
-    4. Grade "fail" if competitive intelligence is superficial or missing key incumbent solutions
-
-    5. Grade "pass" only if research provides comprehensive sales intelligence suitable for immediate account-based selling execution
-
-    **FOLLOW-UP QUERY GENERATION:**
-    If grading "fail", generate 5-8 specific follow-up queries targeting the most critical gaps:
-    - Focus on missing competitive intelligence and vendor relationships
-    - Target specific stakeholder identification and contact information
-    - Address product-organization fit analysis gaps
-    - Include searches for budget/procurement timeline indicators
-    - Prioritize actionable sales intelligence over general company information
-
-    Be demanding about research quality - sales intelligence requires detailed, current, and actionable information for successful account-based selling.
+    Be demanding about research quality. Sales teams need specific, actionable intelligence, not general company overviews.
 
     Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
     Your response must be a single, raw JSON object validating against the 'SalesFeedback' schema.
@@ -575,48 +593,48 @@ enhanced_sales_search = LlmAgent(
         thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
     ),
     instruction="""
-    You are a specialist sales intelligence researcher executing precision follow-up research to address specific gaps in product-organization fit analysis.
+    You are a specialist sales intelligence researcher executing precision follow-up research to address specific gaps.
 
-    **MISSION:**
-    Your previous sales research was graded as insufficient. You must now:
+    **CRITICAL EXECUTION RULE:**
+    You must execute EVERY SINGLE query listed in the 'follow_up_queries' from the evaluation. No exceptions.
 
-    1. **Review Evaluation Feedback:** Analyze 'sales_research_evaluation' to understand specific deficiencies in:
-       - Product competitive positioning and differentiation analysis
-       - Organization stakeholder mapping and decision-maker identification
-       - Technology landscape and current vendor relationships
-       - Product-organization fit assessment depth
-       - Sales actionability and next steps clarity
+    **EXECUTION PROCESS:**
+    1. **Load Previous Research:** Review existing 'sales_research_findings' to understand current state
+    2. **Execute All Follow-Up Queries:** Run EVERY query in 'follow_up_queries' systematically
+    3. **Integrate Findings:** Merge new information with existing research seamlessly
+    4. **Complete the Analysis:** Fill all identified gaps and provide comprehensive output
 
-    2. **Execute Targeted Searches:** Run EVERY query in 'follow_up_queries' using these enhanced search techniques:
-       - Use exact product names and competitor names for precision
-       - Include organization names with specific role titles for stakeholder identification
-       - Target specific platforms (LinkedIn for personnel, G2/Capterra for product reviews)
-       - Search for financial indicators and procurement timeline clues
-       - Focus on recent information (2024, current year) for timing relevance
-
-    3. **Integrate and Enhance:** Combine new findings with existing 'sales_research_findings' to create:
-       - More comprehensive product-organization fit matrices
-       - Better verified competitive intelligence and positioning
-       - Enhanced stakeholder profiles with contact information
-       - Stronger technology landscape and vendor relationship analysis
-       - More actionable sales intelligence and engagement strategies
-
-    **SEARCH OPTIMIZATION FOR SALES INTELLIGENCE:**
-    - Prioritize competitive intelligence and incumbent solution identification
-    - Seek specific stakeholder contact information and organizational roles
-    - Look for budget indicators, procurement processes, and buying timeline signals
-    - Find technology pain points and modernization initiatives
-    - Cross-reference vendor satisfaction and contract renewal information
-    - Verify product positioning through customer reviews and case studies
+    **SEARCH OPTIMIZATION:**
+    - Use exact terms from follow-up queries - they target specific gaps
+    - Prioritize stakeholder identification with names and contact details
+    - Focus on competitive intelligence and current vendor relationships
+    - Seek specific technology details and contract information
+    - Target budget indicators and procurement processes
 
     **INTEGRATION STANDARDS:**
-    - Merge new information with existing research seamlessly
-    - Highlight newly discovered sales-relevant information
-    - Resolve conflicts between old and new competitive intelligence
-    - Maintain focus on actionable sales insights throughout
-    - Ensure enhanced research supports account-based selling strategies
+    - Combine new findings with existing research seamlessly
+    - Resolve any conflicts between old and new information
+    - Maintain comprehensive coverage across all products and organizations
+    - Ensure enhanced research addresses all evaluation concerns
+    - Provide complete product-organization fit analysis
 
-    Your output must be complete, enhanced sales intelligence findings that address all identified gaps and enable immediate sales action.
+    **OUTPUT REQUIREMENTS:**
+    Your final output must include:
+    - All previous research findings (preserved)
+    - All new research findings (clearly integrated)
+    - Complete product-organization cross-analysis
+    - Specific stakeholder details with contact information
+    - Comprehensive competitive intelligence per combination
+    - Enhanced technology and vendor landscape analysis
+
+    **CRITICAL SUCCESS FACTORS:**
+    - Execute every follow-up query without exception
+    - Provide specific stakeholder names and contact details
+    - Include detailed competitive positioning analysis
+    - Complete all missing product-organization fit assessments
+    - Deliver immediately actionable sales intelligence
+
+    Do not skip any follow-up queries. Complete comprehensive research that fills all identified gaps.
     """,
     tools=[google_search],
     output_key="sales_research_findings",
@@ -704,627 +722,13 @@ sales_report_composer = LlmAgent(
     after_agent_callback=citation_replacement_callback,
 )
 
+from .target_template import TARGET_TEMPLATE
+
 html_report_generator = LlmAgent(
     model=config.critic_model,
     name="html_report_generator",
     description="Converts markdown sales intelligence reports into professional HTML format with responsive design and interactive elements.",
-    instruction="""
-    You are a professional HTML report designer specializing in converting sales intelligence markdown reports into polished, interactive HTML documents.
-
-    **MISSION:** Transform the markdown sales intelligence report into a comprehensive HTML document following the standardized template structure with proper styling, responsive design, and professional presentation.
-
-    ---
-    ### INPUT DATA SOURCES
-    * Markdown Report: `{sales_intelligence_agent}` - The complete markdown sales intelligence report
-    * Citation Sources: `{sources}` - Source information for reference links
-
-    ---
-    ### HTML GENERATION REQUIREMENTS
-
-    **1. Document Structure:**
-    - Generate complete HTML document with proper DOCTYPE, head, and body
-    - Include embedded CSS for professional styling and responsive design
-    - Extract product/company names for dynamic title generation
-    - Use semantic HTML5 elements for accessibility
-
-    **2. Content Extraction and Conversion:**
-    - **Header**: Extract main product/company name for report title
-    - **Metadata**: Infer report type, focus area, and target organization from content
-    - **Table of Contents**: Generate with proper anchor links to all sections
-    - **Sections**: Convert all 9 standard sections from markdown to HTML
-    - **Citations**: Convert markdown citation references to proper HTML spans with citation class
-
-    **3. CSS Framework - Include Complete Stylesheet:**
-    ```css
-    :root {
-        --primary-color: #2c3e50;
-        --secondary-color: #3498db;
-        --accent-color: #2980b9;
-        --success-color: #27ae60;
-        --warning-color: #f39c12;
-        --danger-color: #e74c3c;
-        --light-color: #ecf0f1;
-        --dark-color: #2c3e50;
-        --text-color: #333;
-        --border-radius: 8px;
-        --box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        line-height: 1.6;
-        color: var(--text-color);
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        min-height: 100vh;
-        padding: 20px;
-    }
-
-    .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        overflow: hidden;
-    }
-
-    .report-header {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        color: white;
-        padding: 40px;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .report-header::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-        opacity: 0.3;
-    }
-
-    .report-header h1 {
-        font-size: 2.5em;
-        font-weight: 700;
-        margin-bottom: 10px;
-        position: relative;
-        z-index: 2;
-    }
-
-    .report-subtitle {
-        font-size: 1.1em;
-        opacity: 0.9;
-        position: relative;
-        z-index: 2;
-    }
-
-    .report-meta {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
-        padding: 30px 40px;
-        background: var(--light-color);
-        border-bottom: 1px solid #e0e0e0;
-    }
-
-    .report-meta div {
-        text-align: center;
-    }
-
-    .report-meta h4 {
-        color: var(--primary-color);
-        font-size: 0.9em;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 8px;
-        font-weight: 600;
-    }
-
-    .report-meta p {
-        font-size: 1.1em;
-        font-weight: 500;
-        color: var(--dark-color);
-    }
-
-    .content {
-        padding: 40px;
-    }
-
-    .toc {
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: var(--border-radius);
-        padding: 30px;
-        margin-bottom: 40px;
-    }
-
-    .toc h3 {
-        color: var(--primary-color);
-        margin-bottom: 20px;
-        font-size: 1.3em;
-        border-bottom: 2px solid var(--secondary-color);
-        padding-bottom: 10px;
-    }
-
-    .toc-list {
-        list-style: none;
-        columns: 2;
-        column-gap: 30px;
-    }
-
-    .toc-list li {
-        margin-bottom: 8px;
-        break-inside: avoid;
-    }
-
-    .toc-list a {
-        text-decoration: none;
-        color: var(--accent-color);
-        font-weight: 500;
-        display: block;
-        padding: 5px 10px;
-        border-radius: 4px;
-        transition: all 0.3s ease;
-    }
-
-    .toc-list a:hover {
-        background: var(--secondary-color);
-        color: white;
-        transform: translateX(5px);
-    }
-
-    section {
-        margin-bottom: 50px;
-        scroll-margin-top: 20px;
-    }
-
-    section h2 {
-        color: var(--primary-color);
-        font-size: 2em;
-        margin-bottom: 25px;
-        padding-bottom: 10px;
-        border-bottom: 3px solid var(--secondary-color);
-        position: relative;
-    }
-
-    section h3 {
-        color: var(--dark-color);
-        font-size: 1.4em;
-        margin: 25px 0 15px 0;
-        font-weight: 600;
-    }
-
-    section h4 {
-        color: var(--accent-color);
-        font-size: 1.2em;
-        margin: 20px 0 10px 0;
-        font-weight: 600;
-    }
-
-    .data-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
-        margin: 25px 0;
-    }
-
-    .data-card {
-        background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
-        border: 1px solid #e9ecef;
-        border-radius: var(--border-radius);
-        padding: 20px;
-        box-shadow: var(--box-shadow);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .data-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .metric-label {
-        display: block;
-        font-size: 0.9em;
-        color: var(--secondary-color);
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 8px;
-    }
-
-    .metric-value {
-        font-size: 1.3em;
-        font-weight: 700;
-        color: var(--primary-color);
-    }
-
-    .data-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 20px 0;
-        background: white;
-        border-radius: var(--border-radius);
-        overflow: hidden;
-        box-shadow: var(--box-shadow);
-    }
-
-    .data-table th {
-        background: var(--primary-color);
-        color: white;
-        padding: 15px 12px;
-        text-align: left;
-        font-weight: 600;
-        font-size: 0.9em;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .data-table td {
-        padding: 12px;
-        border-bottom: 1px solid #e9ecef;
-        vertical-align: top;
-    }
-
-    .data-table tbody tr:hover {
-        background: #f8f9fa;
-    }
-
-    .section-highlight {
-        background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, rgba(41, 128, 185, 0.1) 100%);
-        border-left: 4px solid var(--secondary-color);
-        padding: 20px;
-        margin: 20px 0;
-        border-radius: 0 var(--border-radius) var(--border-radius) 0;
-    }
-
-    .risk-warning {
-        background: linear-gradient(135deg, rgba(231, 76, 60, 0.1) 0%, rgba(192, 57, 43, 0.1) 100%);
-        border-left: 4px solid var(--danger-color);
-        padding: 20px;
-        margin: 20px 0;
-        border-radius: 0 var(--border-radius) var(--border-radius) 0;
-    }
-
-    .competitive-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 20px;
-        margin: 25px 0;
-    }
-
-    .competitor-card {
-        background: white;
-        border: 1px solid #e9ecef;
-        border-radius: var(--border-radius);
-        padding: 20px;
-        box-shadow: var(--box-shadow);
-        transition: transform 0.3s ease;
-    }
-
-    .competitor-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-    }
-
-    .competitor-name {
-        font-size: 1.2em;
-        font-weight: 700;
-        color: var(--primary-color);
-        margin-bottom: 5px;
-    }
-
-    .competitor-focus {
-        font-style: italic;
-        color: var(--secondary-color);
-        margin-bottom: 10px;
-        font-size: 0.95em;
-    }
-
-    .stakeholder-map {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 15px;
-        margin: 20px 0;
-    }
-
-    .stakeholder-item {
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: var(--border-radius);
-        padding: 15px;
-        transition: background 0.3s ease;
-    }
-
-    .stakeholder-item:hover {
-        background: #e9ecef;
-    }
-
-    .stakeholder-item h4 {
-        color: var(--primary-color);
-        margin-bottom: 5px;
-        font-size: 1em;
-    }
-
-    .risk-matrix {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-        margin: 20px 0;
-    }
-
-    .risk-item {
-        padding: 15px;
-        border-radius: var(--border-radius);
-        font-weight: 500;
-        text-align: center;
-        border: 2px solid;
-        transition: transform 0.3s ease;
-    }
-
-    .risk-item:hover {
-        transform: scale(1.02);
-    }
-
-    .risk-high {
-        background: rgba(231, 76, 60, 0.1);
-        border-color: var(--danger-color);
-        color: var(--danger-color);
-    }
-
-    .risk-medium {
-        background: rgba(243, 156, 18, 0.1);
-        border-color: var(--warning-color);
-        color: var(--warning-color);
-    }
-
-    .risk-low {
-        background: rgba(39, 174, 96, 0.1);
-        border-color: var(--success-color);
-        color: var(--success-color);
-    }
-
-    .timeline {
-        position: relative;
-        padding-left: 30px;
-        margin: 25px 0;
-    }
-
-    .timeline::before {
-        content: '';
-        position: absolute;
-        left: 15px;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background: var(--secondary-color);
-    }
-
-    .timeline-item {
-        position: relative;
-        margin-bottom: 30px;
-    }
-
-    .timeline-marker {
-        position: absolute;
-        left: -23px;
-        top: 5px;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background: var(--secondary-color);
-        border: 3px solid white;
-        box-shadow: 0 0 0 3px var(--secondary-color);
-    }
-
-    .timeline-content {
-        background: white;
-        border: 1px solid #e9ecef;
-        border-radius: var(--border-radius);
-        padding: 20px;
-        box-shadow: var(--box-shadow);
-    }
-
-    .timeline-content h4 {
-        margin-bottom: 10px;
-        color: var(--primary-color);
-    }
-
-    .citation {
-        color: var(--secondary-color);
-        font-weight: 500;
-        font-size: 0.9em;
-    }
-
-    .references {
-        background: #f8f9fa;
-        border-top: 1px solid #e9ecef;
-        padding: 30px 40px;
-        margin-top: 40px;
-    }
-
-    .references h2 {
-        color: var(--primary-color);
-        margin-bottom: 20px;
-    }
-
-    .references ol {
-        padding-left: 0;
-    }
-
-    .references li {
-        margin-bottom: 10px;
-        padding: 10px;
-        background: white;
-        border-radius: var(--border-radius);
-        border: 1px solid #e9ecef;
-    }
-
-    .references a {
-        color: var(--accent-color);
-        text-decoration: none;
-        font-weight: 500;
-    }
-
-    .references a:hover {
-        text-decoration: underline;
-    }
-
-    footer {
-        text-align: center;
-        padding: 30px;
-        background: var(--primary-color);
-        color: white;
-        font-size: 0.9em;
-    }
-
-    footer p {
-        margin-bottom: 5px;
-    }
-
-    @media (max-width: 768px) {
-        .container {
-            margin: 10px;
-            border-radius: 10px;
-        }
-        
-        .report-header {
-            padding: 30px 20px;
-        }
-        
-        .report-header h1 {
-            font-size: 2em;
-        }
-        
-        .content {
-            padding: 20px;
-        }
-        
-        .report-meta {
-            padding: 20px;
-            grid-template-columns: 1fr;
-            gap: 15px;
-        }
-        
-        .toc-list {
-            columns: 1;
-        }
-        
-        .data-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .competitive-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .data-table {
-            font-size: 0.9em;
-        }
-        
-        .data-table th,
-        .data-table td {
-            padding: 8px 6px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        body {
-            padding: 10px;
-        }
-        
-        .report-header h1 {
-            font-size: 1.8em;
-        }
-        
-        .content {
-            padding: 15px;
-        }
-        
-        section h2 {
-            font-size: 1.6em;
-        }
-        
-        .data-table {
-            display: block;
-            overflow-x: auto;
-            white-space: nowrap;
-        }
-    }
-    ```
-
-    **4. Section Conversion Rules:**
-
-    **Executive Summary:**
-    - Extract purpose, scope, and key opportunities for data cards
-    - Convert bullet points to HTML lists with proper citation spans
-    - Place success factors in section-highlight div
-    - Place risks in risk-warning div
-
-    **Product Overview:**
-    - Extract product name and category for data cards
-    - Convert value propositions to structured lists
-    - Maintain all subsection structure from markdown
-
-    **Target Organization:**
-    - Extract company metrics (name, HQ, employees, revenue) for data cards
-    - Convert stakeholder information to stakeholder-map grid
-    - Create stakeholder-item divs for each person
-
-    **Fit Analysis:**
-    - Convert analysis tables to proper HTML tables with data-table class
-    - Extract fit scores and evidence for table rows
-    - Maintain cross-matrix structure
-
-    **Competitive Landscape:**
-    - Use competitive-grid for competitor layout
-    - Create competitor-card divs with competitor-name and competitor-focus elements
-
-    **Engagement Strategy:**
-    - Convert messaging themes to structured lists by stakeholder group
-    - Use timeline class for engagement sequence
-    - Create timeline-item divs with timeline-marker and timeline-content
-
-    **Risks & Red Flags:**
-    - Use risk-matrix with appropriate risk-level classes (risk-high, risk-medium, risk-low)
-    - Place detailed descriptions in risk-warning div
-
-    **Action Plan:**
-    - Maintain timeframe structure (Immediate, Medium-Term, Long-Term)
-    - Convert to HTML lists with proper citations
-
-    **5. Citation Processing:**
-    - Convert markdown citation patterns [1], [2], [1,2] to `<span class="citation">[number]</span>`
-    - Build references section with proper numbered list and links
-    - Ensure all citation numbers in content match reference list
-
-    **6. Responsive Design Features:**
-    - Mobile-responsive grid layouts
-    - Collapsing navigation for smaller screens  
-    - Horizontal scroll for tables on mobile
-    - Scalable typography and spacing
-
-    **CRITICAL SUCCESS FACTORS:**
-    - Complete HTML document with embedded CSS
-    - Professional visual hierarchy and typography
-    - Interactive elements (hover effects, smooth scrolling)
-    - Proper semantic HTML structure for accessibility
-    - Mobile-responsive design
-    - All markdown content converted accurately
-    - Citations properly formatted and linked
-
-    Generate a complete, standalone HTML document that transforms the markdown report into a professional, interactive sales intelligence presentation.
-    """,
+    instruction=TARGET_TEMPLATE,
     output_key="target_html",
 )
 
@@ -1349,79 +753,79 @@ sales_intelligence_pipeline = SequentialAgent(
     ],
 )
 
-# --- UPDATED MAIN AGENT ---
-sales_intelligence_agent = LlmAgent(
-    name="sales_intelligence_agent",
-    model = config.worker_model,
-    description="Specialized sales intelligence assistant that creates comprehensive product-organization fit analysis reports for account-based selling.",
-    instruction=f"""
-    You are a specialized Sales Intelligence Assistant focused on comprehensive product-organization fit analysis for account-based selling and strategic sales planning.
+# # --- UPDATED MAIN AGENT ---
+# sales_intelligence_agent = LlmAgent(
+#     name="sales_intelligence_agent",
+#     model = config.worker_model,
+#     description="Specialized sales intelligence assistant that creates comprehensive product-organization fit analysis reports for account-based selling.",
+#     instruction=f"""
+#     You are a specialized Sales Intelligence Assistant focused on comprehensive product-organization fit analysis for account-based selling and strategic sales planning.
 
-    **CORE MISSION:**
-    Convert ANY user request about products and target organizations into a systematic research plan that generates actionable sales intelligence through:
-    - Product competitive analysis and value proposition mapping
-    - Organizational structure and stakeholder identification
-    - Technology landscape and vendor relationship analysis
-    - Product-organization fit assessment and opportunity prioritization
-    - Sales engagement strategy and action plan development
+#     **CORE MISSION:**
+#     Convert ANY user request about products and target organizations into a systematic research plan that generates actionable sales intelligence through:
+#     - Product competitive analysis and value proposition mapping
+#     - Organizational structure and stakeholder identification
+#     - Technology landscape and vendor relationship analysis
+#     - Product-organization fit assessment and opportunity prioritization
+#     - Sales engagement strategy and action plan development
 
-    **CRITICAL WORKFLOW RULE:**
-    NEVER answer sales questions directly. Your ONLY first action is to use `sales_plan_generator` to create a research plan.
+#     **CRITICAL WORKFLOW RULE:**
+#     NEVER answer sales questions directly. Your ONLY first action is to use `sales_plan_generator` to create a research plan.
 
-    **INPUT PROCESSING:**
-    You will receive requests in various formats:
-    - "Research [Company A, Company B] for selling [Product X, Product Y]"
-    - "Analyze fit between our [Product] and [Organization]"
-    - "Sales intelligence for [Products] targeting [Organizations]"
-    - Lists of companies and products in any combination
+#     **INPUT PROCESSING:**
+#     You will receive requests in various formats:
+#     - "Research [Company A, Company B] for selling [Product X, Product Y]"
+#     - "Analyze fit between our [Product] and [Organization]"
+#     - "Sales intelligence for [Products] targeting [Organizations]"
+#     - Lists of companies and products in any combination
 
-    **Your 3-Step Process:**
-    1. **Plan Generation:** Use `sales_plan_generator` to create a 5-phase research plan covering:
-       - Product Intelligence (competitive landscape, value props, customer success)
-       - Organization Intelligence (structure, priorities, decision-makers)
-       - Technology & Vendor Landscape (current solutions, gaps, procurement)
-       - Stakeholder Mapping (decision-makers, influencers, champions)
-       - Competitive & Risk Assessment (threats, obstacles, timing)
+#     **Your 3-Step Process:**
+#     1. **Plan Generation:** Use `sales_plan_generator` to create a 5-phase research plan covering:
+#        - Product Intelligence (competitive landscape, value props, customer success)
+#        - Organization Intelligence (structure, priorities, decision-makers)
+#        - Technology & Vendor Landscape (current solutions, gaps, procurement)
+#        - Stakeholder Mapping (decision-makers, influencers, champions)
+#        - Competitive & Risk Assessment (threats, obstacles, timing)
 
-    2. **Plan Refinement:** Automatically adjust the plan to ensure:
-       - Complete product-organization cross-analysis coverage
-       - Stakeholder identification and contact research
-       - Competitive intelligence and incumbent solution mapping
-       - Budget capacity and procurement timeline assessment
-       - Sales engagement strategy development
+#     2. **Plan Refinement:** Automatically adjust the plan to ensure:
+#        - Complete product-organization cross-analysis coverage
+#        - Stakeholder identification and contact research
+#        - Competitive intelligence and incumbent solution mapping
+#        - Budget capacity and procurement timeline assessment
+#        - Sales engagement strategy development
 
-    3. **Research Execution:** Delegate to `sales_intelligence_pipeline` with the plan.
+#     3. **Research Execution:** Delegate to `sales_intelligence_pipeline` with the plan.
 
-    **RESEARCH FOCUS AREAS:**
-    - **Product Analysis:** Competitive positioning, value propositions, customer success metrics
-    - **Organization Analysis:** Decision-makers, business priorities, technology gaps
-    - **Fit Assessment:** Product-organization compatibility matrices and opportunity scoring  
-    - **Competitive Intelligence:** Incumbent solutions, vendor relationships, competitive threats
-    - **Sales Strategy:** Stakeholder engagement plans, messaging themes, timing considerations
-    - **Risk Assessment:** Budget constraints, competitive entrenchment, cultural fit challenges
+#     **RESEARCH FOCUS AREAS:**
+#     - **Product Analysis:** Competitive positioning, value propositions, customer success metrics
+#     - **Organization Analysis:** Decision-makers, business priorities, technology gaps
+#     - **Fit Assessment:** Product-organization compatibility matrices and opportunity scoring  
+#     - **Competitive Intelligence:** Incumbent solutions, vendor relationships, competitive threats
+#     - **Sales Strategy:** Stakeholder engagement plans, messaging themes, timing considerations
+#     - **Risk Assessment:** Budget constraints, competitive entrenchment, cultural fit challenges
 
-    **OUTPUT EXPECTATIONS:**
-    The final research will produce a comprehensive Sales Intelligence Report with 9 standardized sections:
-    1. Executive Summary (opportunities, risks, priorities)
-    2. Product Overview(s) (value props, differentiators, use cases)
-    3. Target Organization Profiles (structure, priorities, vendor landscape)
-    4. Product–Organization Fit Analysis (cross-matrix with scores)
-    5. Competitive Landscape (per organization analysis)
-    6. Stakeholder Engagement Strategy (who, how, when)
-    7. Risks & Red Flags (obstacles and mitigation)
-    8. Next Steps & Action Plan (immediate, medium, long-term)
-    9. Appendices (detailed profiles, contacts, references)
+#     **OUTPUT EXPECTATIONS:**
+#     The final research will produce a comprehensive Sales Intelligence Report with 9 standardized sections:
+#     1. Executive Summary (opportunities, risks, priorities)
+#     2. Product Overview(s) (value props, differentiators, use cases)
+#     3. Target Organization Profiles (structure, priorities, vendor landscape)
+#     4. Product–Organization Fit Analysis (cross-matrix with scores)
+#     5. Competitive Landscape (per organization analysis)
+#     6. Stakeholder Engagement Strategy (who, how, when)
+#     7. Risks & Red Flags (obstacles and mitigation)
+#     8. Next Steps & Action Plan (immediate, medium, long-term)
+#     9. Appendices (detailed profiles, contacts, references)
 
-    **AUTOMATIC EXECUTION:**
-    You will proceed immediately with research without asking for approval or clarification unless the input is completely ambiguous. Generate comprehensive sales intelligence suitable for immediate account-based selling execution.
+#     **AUTOMATIC EXECUTION:**
+#     You will proceed immediately with research without asking for approval or clarification unless the input is completely ambiguous. Generate comprehensive sales intelligence suitable for immediate account-based selling execution.
 
-    Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
+#     Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
 
-    Remember: Plan → Execute → Deliver. Always delegate to the specialized research pipeline for complete sales intelligence generation.
-    """,
-    sub_agents=[sales_intelligence_pipeline],
-    tools=[AgentTool(sales_plan_generator)],
-    output_key="sales_research_plan",
-)
+#     Remember: Plan → Execute → Deliver. Always delegate to the specialized research pipeline for complete sales intelligence generation.
+#     """,
+#     sub_agents=[sales_intelligence_pipeline],
+#     tools=[AgentTool(sales_plan_generator)],
+#     output_key="sales_research_plan",
+# )
 
 # root_agent = sales_intelligence_agent

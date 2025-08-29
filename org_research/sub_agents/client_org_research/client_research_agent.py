@@ -498,72 +498,60 @@ def html_report_generator_callback(callback_context: CallbackContext) -> genai_t
     return genai_types.Content(parts=[genai_types.Part(text=html_content)])
 
 # --- Enhanced Agent Definitions ---
-organizational_plan_generator = LlmAgent(
+sales_plan_generator = LlmAgent(
     model=config.search_model,
-    name="organizational_plan_generator",
-    description="Generates comprehensive organizational research plans with exact name matching and detailed search strategies.",
+    name="sales_plan_generator",
+    description="Generates comprehensive sales intelligence research plans with exact name matching and targeted search strategies.",
     instruction=f"""
-    You are an expert organizational intelligence strategist specializing in comprehensive company research for sales and business development.
-    
-    **MISSION:** Create a systematic research plan to investigate organizations, focusing on actionable business intelligence with EXACT name matching.
+    You are an expert sales intelligence strategist specializing in comprehensive company research for targeted marketing and sales campaigns.
+
+    **MISSION:** Create a systematic research plan to investigate target organizations, focusing on actionable sales intelligence with EXACT name matching.
 
     **CRITICAL NAME MATCHING REQUIREMENTS:**
     - Always use the COMPLETE, EXACT organization name as provided by the user
     - Use quotation marks around the full company name in searches to ensure exact matching
     - Never truncate, abbreviate, or use partial company names
     - If the organization name contains multiple words, treat it as a single entity
-    - Example: For "Global Knowledge Technologies" always search for "Global Knowledge Technologies", never "Global Knowledge"
-
-    **INITIAL VERIFICATION STEP:**
-    Before creating the research plan, perform a verification search to:
-    - Confirm the exact organization exists with the provided name
-    - Identify the correct company website and official presence
-    - Distinguish from similarly named organizations
-    - Note any common name variations or legal entity names (e.g., "Inc.", "LLC", "Ltd.")
 
     **RESEARCH METHODOLOGY - 4 PHASES:**
 
-    **Phase 1: Foundation Research (35% effort):**
+    **Phase 1: Company Foundation & Structure (30% effort):**
     Generate [RESEARCH] tasks with EXACT name matching for:
-    - Official company website exploration (about, leadership, products/services)
-    - LinkedIn company page and executive profiles analysis
-    - Basic corporate structure and business model investigation
-    - Industry classification and market segment identification
-    - Company size, employee count, and geographic presence
+    - Official company website exploration (products/services, target customers)
+    - Names, Phone Numbers, Emails, and details about Key individuals releated to the company.
+    - Organizational structure and decision-making hierarchy
+    - Key departments and team structures relevant to our products
+    - Company size, employee count, and geographic distribution
 
-    **Phase 2: Financial & Market Intelligence (25% effort):**
+    **Phase 2: Decision-Maker Identification (30% effort):**
     Generate [RESEARCH] tasks with EXACT name matching for:
-    - Revenue data, funding history, and financial performance
-    - SEC filings, annual reports, and investor relations materials
-    - Market share data and competitive positioning
-    - Recent business news and media coverage analysis
-    - Industry analyst reports and market research
+    - Executive leadership team and their responsibilities
+    - Department heads and key managers
+    - Technical decision-makers and influencers
+    - Procurement and purchasing team members
 
-    **Phase 3: Leadership & Strategic Intelligence (25% effort):**
+    **Phase 3: Technology & Needs Assessment (25% effort):**
     Generate [RESEARCH] tasks with EXACT name matching for:
-    - Executive team backgrounds and career histories
-    - Recent leadership changes and organizational restructuring
-    - Strategic partnerships and business alliances
-    - Technology investments and innovation initiatives
-    - Customer testimonials and case studies
+    - Current technology stack and infrastructure
+    - Recent technology investments and upgrades
+    - Pain points and business challenges
+    - Growth initiatives and expansion plans
 
-    **Phase 4: Risk & Opportunity Assessment (15% effort):**
+    **Phase 4: Sales Intelligence (15% effort):**
     Generate [RESEARCH] tasks with EXACT name matching for:
-    - Regulatory issues and legal challenges
-    - Reputation risks and public perception analysis
-    - Competitive threats and market vulnerabilities
-    - Growth opportunities and expansion signals
-    - Buying signals and decision-making indicators
+    - Budget cycles and spending patterns
+    - Recent vendor relationships and partnerships
+    - Competitor presence and market position
+    - Buying signals and timing indicators
 
     **EXACT SEARCH STRATEGY GUIDELINES:**
     - Always use the complete organization name in quotation marks
     - Create specific, targeted search queries with exact name matching
-    - Focus on recent information (last 12-18 months)
-    - Include both positive and negative information gathering
-    - Prioritize authoritative sources (official sites, financial databases, major news outlets)
-    - Balance breadth with depth of investigation
-    - If no results found with exact name, note this explicitly rather than using partial matches
-
+    - Focus on recent information (last 12-18 months) for accuracy
+    - Include both technology and business-focused searches
+    - Prioritize authoritative sources (official sites, LinkedIn, industry publications)
+    - Balance executive leadership research with technical decision-maker identification
+    
     **OUTPUT FORMAT:**
     Structure your plan with clear phase divisions, specific research objectives, and actionable search strategies that maintain exact name matching throughout.
     
@@ -572,6 +560,7 @@ organizational_plan_generator = LlmAgent(
     output_key="research_plan",
     tools=[google_search],
 )
+
 
 from .org_report_template import TEMPLATE
 
@@ -583,45 +572,51 @@ organizational_section_planner = LlmAgent(
     output_key="report_sections",
 )
 
-organizational_researcher = LlmAgent(
+sales_intelligence_researcher = LlmAgent(
     model=config.search_model,
-    name="organizational_researcher",
-    description="Deep-dive organizational intelligence researcher with systematic approach to company analysis.",
+    name="sales_intelligence_researcher",
+    description="Deep-dive sales intelligence researcher with systematic approach to target organization analysis.",
     planner=BuiltInPlanner(
         thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
     ),
     instruction="""
-    You are a senior business intelligence researcher specializing in comprehensive organizational analysis for strategic sales intelligence.
+    You are a senior sales intelligence researcher specializing in comprehensive target organization analysis for strategic marketing and sales campaigns.
 
     **CORE RESEARCH METHODOLOGY:**
 
     **1. SYSTEMATIC SEARCH EXECUTION WITH EXACT NAME MATCHING:**
     Execute searches in logical sequence, building knowledge progressively. CRITICAL: Always use the complete, exact organization name in quotation marks for precision.
 
-    *Foundation Searches (Use EXACT company name in quotes):*
-    - "\"[EXACT Company Name]\" official website about company"
-    - "\"[EXACT Company Name]\" business model revenue how they make money"
-    - "\"[EXACT Company Name]\" leadership team executives CEO CFO"
-    - "\"[EXACT Company Name]\" company size employees headcount"
-    - "\"[EXACT Company Name]\" headquarters locations offices"
+    *Foundation & Organizational Searches (Use EXACT company name in quotes):*
+    - "\"[EXACT Company Name]\" organizational structure reporting hierarchy"
+    - "\"[EXACT Company Name]\" departments teams business units"
+    - "\"[EXACT Company Name]\" company size employees headcount locations"
+    - "\"[EXACT Company Name]\" business model revenue streams"
 
-    *Financial Intelligence (Use EXACT company name in quotes):*
-    - "\"[EXACT Company Name]\" revenue financial performance 2024"
-    - "\"[EXACT Company Name]\" funding series investors venture capital"
-    - "\"[EXACT Company Name]\" stock price market cap public private"
-    - "\"[EXACT Company Name]\" SEC filings 10-K annual report"
+    *Decision-Maker Identification (Use EXACT company name in quotes):*
+    - "\"[EXACT Company Name]\" executive team C-suite leadership"
+    - "\"[EXACT Company Name]\" IT department technology leadership CTO CIO"
+    - "\"[EXACT Company Name]\" procurement purchasing vendor management"
+    - "\"[EXACT Company Name]\" department heads managers directors"
+    - "\"[EXACT Company Name]\" LinkedIn company page executive profiles"
 
-    *Market & Competitive Analysis (Use EXACT company name in quotes):*
-    - "\"[EXACT Company Name]\" competitors competitive landscape"
-    - "\"[EXACT Company Name]\" market share industry position"
-    - "\"[EXACT Company Name]\" news recent developments 2024"
-    - "\"[EXACT Company Name]\" partnerships strategic alliances"
+    *Technology & Infrastructure Assessment (Use EXACT company name in quotes):*
+    - "\"[EXACT Company Name]\" technology stack software solutions infrastructure"
+    - "\"[EXACT Company Name]\" recent technology investments upgrades 2024"
+    - "\"[EXACT Company Name]\" digital transformation technology roadmap"
+    - "\"[EXACT Company Name]\" current vendors solution providers"
 
-    *Risk & Opportunity Assessment (Use EXACT company name in quotes):*
-    - "\"[EXACT Company Name]\" controversies legal issues regulatory problems"
-    - "\"[EXACT Company Name]\" growth opportunities expansion plans"
-    - "\"[EXACT Company Name]\" customer reviews testimonials case studies"
-    - "\"[EXACT Company Name]\" technology stack digital transformation"
+    *Business Needs & Pain Points (Use EXACT company name in quotes):*
+    - "\"[EXACT Company Name]\" business challenges pain points 2024"
+    - "\"[EXACT Company Name]\" growth initiatives expansion plans"
+    - "\"[EXACT Company Name]\" competitive challenges market position"
+    - "\"[EXACT Company Name]\" customer satisfaction service issues"
+
+    *Sales Intelligence & Buying Signals (Use EXACT company name in quotes):*
+    - "\"[EXACT Company Name]\" budget planning spending patterns"
+    - "\"[EXACT Company Name]\" vendor selection procurement process"
+    - "\"[EXACT Company Name]\" recent purchases technology acquisitions"
+    - "\"[EXACT Company Name]\" trigger events buying signals"
 
     **EXACT NAME MATCHING PROTOCOL:**
     - NEVER truncate or abbreviate the organization name
@@ -629,150 +624,130 @@ organizational_researcher = LlmAgent(
     - Use quotation marks around the full company name for precise matching
     - If no results are found with the exact name, note this explicitly
     - Only use alternative search terms if the exact name yields no results
-    - Distinguish the target organization from similarly named companies
     - Verify you're researching the correct entity by checking website domains and official presence
 
-    *Risk & Opportunity Assessment:*
-    - "[Company Name] controversies legal issues regulatory problems"
-    - "[Company Name] growth opportunities expansion plans"
-    - "[Company Name] customer reviews testimonials case studies"
-    - "[Company Name] technology stack digital transformation"
-
     **2. SOURCE PRIORITIZATION HIERARCHY:**
-    - **Tier 1 (Authoritative):** Company official website, SEC filings, major financial databases
-    - **Tier 2 (Professional):** LinkedIn profiles, industry publications, major news outlets
-    - **Tier 3 (Contextual):** Business databases (Crunchbase), analyst reports, trade publications
+    - **Tier 1 (Authoritative):** Company official website, LinkedIn company page, executive profiles
+    - **Tier 2 (Professional):** Industry publications, technology blogs, business databases
+    - **Tier 3 (Contextual):** News articles, press releases, conference presentations
     - **Tier 4 (Supplementary):** Social media, forums, review sites
 
     **3. INFORMATION VERIFICATION STANDARDS:**
-    - Cross-reference critical facts across minimum 2 sources
+    - Cross-reference critical decision-maker information across multiple sources
+    - Verify technology stack details through multiple channels
     - Note conflicting information and source reliability
     - Prioritize recent information (12-18 months) with historical context
     - Flag unverified claims clearly in findings
 
     **4. COMPREHENSIVE DATA COLLECTION:**
     
-    *Company Fundamentals:*
-    - Legal entity name, DBA names, subsidiaries
-    - Industry classification (NAICS/SIC codes)
+    *Organizational Intelligence:*
+    - Company structure and business units
+    - Employee count and geographic distribution
+    - Key departments and functional areas
     - Business model and revenue streams
-    - Geographic presence and market focus
-    - Company age, founding story, evolution
 
-    *Financial Intelligence:*
-    - Revenue figures (annual/quarterly if available)
-    - Funding history and investor details
-    - Profitability indicators and growth trends
-    - Market valuation and financial health metrics
-    - Budget allocation patterns and spending priorities
+    *Decision-Maker Intelligence:*
+    - C-suite executives and their backgrounds
+    - Department heads and key managers
+    - Technical leadership and IT decision-makers
+    - Procurement and purchasing contacts
+    - Reporting relationships and influence networks
 
-    *Leadership Analysis:*
-    - C-suite executive profiles and backgrounds
-    - Board composition and key stakeholders
-    - Recent leadership changes and implications
-    - Decision-making authority and procurement processes
-    - Employee count and organizational structure
+    *Technology Assessment:*
+    - Current technology stack and infrastructure
+    - Recent technology investments and upgrades
+    - Technology roadmap and future plans
+    - Compatibility with our product offerings
+    - Integration requirements and constraints
 
-    *Market Position:*
-    - Competitive landscape and direct competitors
-    - Market share and industry ranking
-    - Unique value propositions and differentiators
-    - Customer base characteristics and segments
-    - Partnership ecosystem and strategic alliances
+    *Business Needs Analysis:*
+    - Operational pain points and challenges
+    - Growth initiatives and strategic projects
+    - Competitive pressures and market challenges
+    - Regulatory and compliance requirements
 
-    *Strategic Intelligence:*
-    - Recent developments and strategic initiatives
-    - Technology investments and digital maturity
-    - Growth indicators and expansion signals
-    - Innovation focus and R&D priorities
-    - Merger, acquisition, or partnership activity
-
-    *Risk Assessment:*
-    - Regulatory compliance and legal issues
-    - Reputation risks and public perception
-    - Financial stability and operational challenges
-    - Competitive threats and market vulnerabilities
-    - Customer satisfaction and retention indicators
+    *Sales Intelligence:*
+    - Budget cycles and spending patterns
+    - Procurement processes and decision criteria
+    - Recent vendor relationships and partnerships
+    - Buying signals and opportunity timing
+    - Competitor presence and solution adoption
 
     **5. RESEARCH QUALITY STANDARDS:**
-    - **Objectivity:** Include both positive and negative findings
+    - **Accuracy:** Verify all decision-maker names and titles
     - **Recency:** Emphasize developments from last 12-18 months
-    - **Relevance:** Focus on sales and business relationship implications
+    - **Relevance:** Focus on sales and marketing implications
     - **Depth:** Provide specific examples and concrete evidence
     - **Attribution:** Clearly indicate source reliability and dates
 
     **OUTPUT REQUIREMENTS:**
     Compile comprehensive findings addressing all research areas with:
-    - Specific facts with source attribution
-    - Direct quotes from official sources when relevant
-    - Quantitative data and metrics where available
-    - Recent developments with dates and context
-    - Both opportunities and risks identified
-    - Sales-relevant intelligence highlighted
+    - Specific decision-maker information with titles and roles
+    - Detailed technology assessment with compatibility analysis
+    - Concrete business needs and pain points
+    - Actionable sales intelligence with timing indicators
+    - Proper source attribution for all critical information
 
-    Your research will feed into a professional HTML report - ensure thoroughness and accuracy.
+    Your research will feed into a professional Sales Intelligence Report - ensure thoroughness and accuracy for marketing campaign planning.
     """,
     tools=[google_search],
-    output_key="organizational_research_findings",
+    output_key="sales_research_findings",
     after_agent_callback=collect_research_sources_callback,
 )
 
 # Enhanced evaluator with stricter standards
-organizational_evaluator = LlmAgent(
+sales_intelligence_evaluator = LlmAgent(
     model=config.critic_model,
-    name="organizational_evaluator",
+    name="sales_intelligence_evaluator",
     description="Rigorous evaluation specialist for organizational intelligence research completeness and quality.",
     instruction=f"""
-    You are a senior business intelligence quality assurance specialist with expertise in organizational research evaluation.
+   You are a senior sales intelligence quality assurance specialist with expertise in target organization research evaluation for marketing campaigns.
 
-    **MISSION:** Evaluate research findings against professional intelligence standards for comprehensive company analysis.
+    **MISSION:** Evaluate research findings against professional sales intelligence standards for comprehensive target organization analysis.
 
     **EVALUATION FRAMEWORK - 100 POINT SCALE:**
 
-    **1. Company Fundamentals (25 points):**
-    - Company identification and basic information (5 pts)
-    - Business model and revenue streams clarity (5 pts)
-    - Industry classification and market focus (5 pts)
-    - Geographic presence and company structure (5 pts)
-    - Founding information and company evolution (5 pts)
+    **1. Decision-Maker Intelligence (30 points):**
+    - C-suite executive identification and background completeness (10 pts)
+    - Department head and key manager mapping accuracy (8 pts)
+    - Technical decision-maker and influencer identification (7 pts)
+    - Procurement and purchasing contact completeness (5 pts)
 
-    **2. Financial Intelligence (25 points):**
-    - Revenue data and financial performance (8 pts)
-    - Funding history and investor information (7 pts)
-    - Market valuation and financial health (5 pts)
-    - Growth trends and financial indicators (5 pts)
+    **2. Technology & Infrastructure Assessment (25 points):**
+    - Current technology stack analysis completeness (8 pts)
+    - Recent technology investments and upgrade documentation (7 pts)
+    - Compatibility assessment with our product offerings (5 pts)
+    - Integration requirements and constraints identification (5 pts)
 
-    **3. Leadership & Organizational Analysis (20 points):**
-    - Executive team identification and backgrounds (8 pts)
-    - Organizational structure and decision-makers (6 pts)
-    - Recent leadership changes and implications (6 pts)
+    **3. Business Needs & Pain Points (20 points):**
+    - Operational challenges and pain point identification (8 pts)
+    - Growth initiatives and strategic project documentation (7 pts)
+    - Competitive pressure and market challenge analysis (5 pts)
 
-    **4. Market & Competitive Intelligence (15 points):**
-    - Competitive landscape understanding (5 pts)
-    - Market position and unique advantages (5 pts)
-    - Recent strategic developments (5 pts)
-
-    **5. Sales Intelligence Value (15 points):**
-    - Buying signals and opportunity indicators (5 pts)
-    - Decision-making process insights (5 pts)
-    - Risk assessment and due diligence factors (5 pts)
+    **4. Sales Intelligence & Actionable Insights (25 points):**
+    - Budget cycle and spending pattern analysis (8 pts)
+    - Buying signals and opportunity timing identification (7 pts)
+    - Competitive landscape and vendor relationship assessment (5 pts)
+    - Specific targeting and approach recommendations (5 pts)
 
     **GRADING STANDARDS:**
-    - **PASS (75+ points):** Research meets professional intelligence standards
-    - **FAIL (<75 points):** Significant gaps requiring additional investigation
+    - **PASS (80+ points):** Research meets professional sales intelligence standards for marketing campaigns
+    - **FAIL (<80 points):** Significant gaps requiring additional investigation
 
     **CRITICAL SUCCESS FACTORS:**
     - Minimum 3 different source types represented
     - Recent information (within 12-18 months) included
-    - Both positive and negative aspects covered
-    - Specific facts and figures provided (not just generalizations)
-    - Sales-relevant intelligence clearly identified
+    - Both technology and business perspectives covered
+    - Specific decision-maker names and titles provided
+    - Actionable marketing intelligence clearly identified
 
     **FOLLOW-UP QUERY GENERATION (if FAIL):**
-    Generate EXACTLY 3 highly specific queries targeting the most critical gaps:
-    - Focus on missing foundational information first
-    - Target specific data points (financial, leadership, competitive)
-    - Prioritize information with highest sales impact
+    Generate EXACTLY 3-5 highly specific queries targeting the most critical gaps:
+    - Focus on missing decision-maker information first
+    - Target specific technology assessment gaps
+    - Address unclear business needs or pain points
+    - Prioritize intelligence with highest marketing impact
 
     **OUTPUT FORMAT:**
     Provide detailed JSON response with:
@@ -783,7 +758,7 @@ organizational_evaluator = LlmAgent(
 
     Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
 
-    **IMPORTANT:** Be thorough but fair. High-quality research should pass even if some niche areas are incomplete.
+    **IMPORTANT:** Be thorough but fair. High-quality research should pass even if some niche areas are incomplete, but decision-maker and technology intelligence must be comprehensive.
     """,
     output_schema=Feedback,
     disallow_transfer_to_parent=True,
@@ -791,24 +766,25 @@ organizational_evaluator = LlmAgent(
     output_key="research_evaluation",
 )
 
-enhanced_organizational_search = LlmAgent(
+enhanced_sales_intelligence_search = LlmAgent(
     model=config.search_model,
-    name="enhanced_organizational_search",
+    name="enhanced_sales_intelligence_search",
     description="Targeted gap-filling researcher executing precision searches to complete organizational intelligence.",
     planner=BuiltInPlanner(
         thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
     ),
     instruction="""
-    You are a precision organizational researcher specializing in targeted intelligence gathering to address specific research gaps.
+    You are a precision sales intelligence researcher specializing in targeted intelligence gathering to address specific research gaps for marketing campaigns.
 
-    **MISSION:** Execute focused follow-up research to elevate organizational intelligence to professional standards.
+    **MISSION:** Execute focused follow-up research to elevate sales intelligence to professional marketing standards.
 
     **EXECUTION PROTOCOL:**
 
     **1. GAP ANALYSIS:**
     - Review evaluation feedback in 'research_evaluation' for specific deficiencies
     - Identify the most critical missing information categories
-    - Prioritize gaps with highest sales intelligence value
+    - Prioritize gaps with highest marketing intelligence value
+    - Focus on decision-maker completeness and technology assessment gaps first
 
     **2. PRECISION SEARCH STRATEGY:**
     - Execute ALL queries provided in 'follow_up_queries' efficiently
@@ -817,29 +793,29 @@ enhanced_organizational_search = LlmAgent(
     - Apply alternative search angles if initial queries yield limited results
 
     **3. SEARCH OPTIMIZATION TECHNIQUES WITH EXACT NAME MATCHING:**
-    *For Financial Information (ALWAYS use exact company name in quotes):*
-    - "\"[EXACT Company Name]\" 10-K SEC filing annual report"
-    - "\"[EXACT Company Name]\" revenue earnings financial results 2024"
-    - "\"[EXACT Company Name]\" Series A B C funding investors crunchbase"
-    - "\"[EXACT Company Name]\" IPO public private market cap valuation"
+    *For Decision-Maker Intelligence (ALWAYS use exact company name in quotes):*
+    - "\"[EXACT Company Name]\" CTO CIO technology leadership background"
+    - "\"[EXACT Company Name]\" VP directors department heads LinkedIn"
+    - "\"[EXACT Company Name]\" procurement manager vendor management team"
+    - "\"[EXACT Company Name]\" executive team leadership bios profiles"
 
-    *For Leadership Intelligence (ALWAYS use exact company name in quotes):*
-    - "\"[EXACT Company Name]\" CEO name background LinkedIn profile"
-    - "\"[EXACT Company Name]\" executive team leadership bios"
-    - "\"[EXACT Company Name]\" board of directors advisors"
-    - "\"[EXACT Company Name]\" org chart organizational structure"
+    *For Technology Assessment (ALWAYS use exact company name in quotes):*
+    - "\"[EXACT Company Name]\" current software solutions technology stack"
+    - "\"[EXACT Company Name]\" recent IT investments upgrades 2024"
+    - "\"[EXACT Company Name]\" technology roadmap digital transformation"
+    - "\"[EXACT Company Name]\" cloud infrastructure integration requirements"
 
-    *For Competitive Analysis (ALWAYS use exact company name in quotes):*
-    - "\"[EXACT Company Name]\" vs competitors comparison analysis"
-    - "\"[EXACT Company Name]\" market share industry leader"
-    - "\"[EXACT Company Name]\" competitive advantages differentiation"
-    - "\"[EXACT Company Name]\" industry report market research"
+    *For Business Needs (ALWAYS use exact company name in quotes):*
+    - "\"[EXACT Company Name]\" business challenges operational pain points"
+    - "\"[EXACT Company Name]\" growth initiatives strategic projects 2024"
+    - "\"[EXACT Company Name]\" competitive landscape market challenges"
+    - "\"[EXACT Company Name]\" customer satisfaction improvement initiatives"
 
-    *For Strategic Intelligence (ALWAYS use exact company name in quotes):*
-    - "\"[EXACT Company Name]\" recent news acquisitions partnerships 2024"
-    - "\"[EXACT Company Name]\" product launches new initiatives"
-    - "\"[EXACT Company Name]\" expansion plans growth strategy"
-    - "\"[EXACT Company Name]\" press releases corporate communications"
+    *For Sales Intelligence (ALWAYS use exact company name in quotes):*
+    - "\"[EXACT Company Name]\" budget planning cycle spending patterns"
+    - "\"[EXACT Company Name]\" vendor selection process criteria"
+    - "\"[EXACT Company Name]\" recent purchases technology acquisitions"
+    - "\"[EXACT Company Name]\" trigger events buying signals timing"
 
     **CRITICAL SEARCH PRECISION REQUIREMENTS:**
     - Replace [EXACT Company Name] with the complete organization name exactly as provided
@@ -858,17 +834,17 @@ enhanced_organizational_search = LlmAgent(
     - Verify key claims across multiple sources
     - Add specific metrics and quantitative data
     - Include recent developments with precise dates
-    - Ensure sales-relevant insights are prominently featured
+    - Ensure marketing-relevant insights are prominently featured
 
     **OUTPUT REQUIREMENTS:**
-    Deliver enhanced organizational research findings that:
+    Deliver enhanced sales research findings that:
     - Address all gaps identified in the evaluation
     - Integrate seamlessly with previous research
-    - Meet professional business intelligence standards
-    - Provide actionable sales intelligence insights
+    - Meet professional sales intelligence standards
+    - Provide actionable marketing intelligence insights
     - Include proper source attribution for new information
 
-    Focus on quality over quantity - each new piece of information should add significant value to the overall intelligence picture.
+    Focus on quality over quantity - each new piece of information should add significant value to the overall intelligence picture for marketing campaigns.
     """,
     tools=[google_search],
     output_key="organizational_research_findings",
@@ -1087,14 +1063,14 @@ organizational_research_pipeline = SequentialAgent(
     description="Comprehensive organizational intelligence research pipeline with quality assurance loop and HTML report generation.",
     sub_agents=[
         organizational_section_planner,
-        organizational_researcher,
+        sales_intelligence_researcher,
         LoopAgent(
             name="quality_assurance_loop",
             max_iterations=3,  # Allow up to 3 iterations for quality improvement
             sub_agents=[
-                organizational_evaluator,
+                sales_intelligence_evaluator,
                 EscalationChecker(name="escalation_checker"),
-                enhanced_organizational_search,
+                enhanced_sales_intelligence_search,
             ],
         ),
         organizational_report_composer,
@@ -1120,7 +1096,7 @@ organizational_intelligence_agent = LlmAgent(
     - Assess any special focus areas or constraints
 
     **Step 2: STRATEGIC PLANNING**
-    - **MANDATORY:** Use `organizational_plan_generator` to create comprehensive research strategy
+    - **MANDATORY:** Use `sales_plan_generator` to create comprehensive research strategy
     - Never attempt direct research without a systematic plan
     - Ensure plan covers all critical business intelligence areas
 
@@ -1168,6 +1144,6 @@ organizational_intelligence_agent = LlmAgent(
     **REMEMBER:** Always begin with strategic planning, then execute through the comprehensive research pipeline.
     """,
     sub_agents=[organizational_research_pipeline],
-    tools=[AgentTool(organizational_plan_generator)],
+    tools=[AgentTool(sales_plan_generator)],
     output_key="organizational_intelligence_system",
 )

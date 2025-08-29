@@ -668,7 +668,7 @@ enhanced_segmentation_search = LlmAgent(
 
     **ALWAYS DO:**
     3. Integrate and Enhance: Combine new findings with existing 'segmentation_research_findings' to produce:
-       - A more complete segment inventory with descriptions
+       - A more complete, yet concise, segment inventory with descriptions
        - Additional customer segment profiles and needs data
        - Enhanced attractiveness analysis with updated metrics
        - Improved prioritization rationale with any missing information
@@ -677,6 +677,8 @@ enhanced_segmentation_search = LlmAgent(
     - Prioritize authoritative data sources (industry reports, official statistics).
     - Seek multiple validations of key figures.
     - Use specific queries for missing data (e.g., exact segment name + "market size 2024").
+    - When creating the updated findigngs, merge the data from the old report and the new report in a manner that creates a concise report.
+
 
     **OUTPUT:** Your output should be the updated 'segmentation_research_findings' addressing all identified gaps, whether from provided evaluation or self-identified gaps.
     """,

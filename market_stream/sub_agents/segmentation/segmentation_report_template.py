@@ -5,7 +5,6 @@ SEG_TEMPLATE = """
 
     ---
     ### INPUT DATA SOURCES
-    * Research Findings: {segmentation_research_findings}
     * Citation Sources: {citations}
     * Report Structure: {segmentation_intelligence_agent}
 

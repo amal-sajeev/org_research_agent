@@ -1,6 +1,68 @@
 import os
 from pymongo import MongoClient
 import requests,json
+from google.adk.agents.callback_context import CallbackContext
+
+def announce_markdown_upload(project_id: str, report_type: str):
+    """Store prospect research report after prospect_researcher completes"""
+    try:
+        project_id = project_id.replace('"','')
+
+        library = {
+        "market_context": "market_intelligence_agent",
+        "market_segment": "segmentation_intelligence_agent",
+        "target_org_research": "sales_intelligence_agent",
+        "prospect_research": "prospect_researcher"
+        }
+        requests.put(f"https://stu.globalknowledgetech.com:8444/project/project-status-update/{project_id}/",headers = {'Content-Type': 'application/json'}, data = json.dumps({"sub_status": f"{report_type} updated"}))
+
+        print("###################################################################################")
+        print("###################################################################################")
+        print(f"{report_type} report stored successfully for project {project_id}")
+        print("###################################################################################")
+        print("###################################################################################")
+        
+    except Exception as e:
+        print(f"Error announcing markdown report storage: {e}")
+        
+
+def announce_markdown_finish(callback_context:CallbackContext):
+    project_id = callback_context.state["project_id"]
+    try:
+        project_id = project_id.replace('"','')
+        requests.put(f"https://stu.globalknowledgetech.com:8444/project/project-status-update/{project_id}/",headers = {'Content-Type': 'application/json'}, data = json.dumps({"sub_status": f"Completed"}))
+    except Exception as e:
+        print(f"Error announcing markdown completion: {e}")
+
+def announce_html_upload(project_id: str, report_type: str):
+    """Store prospect research report after prospect_researcher completes"""
+    try:
+        project_id = project_id.replace('"','')
+
+        library = {
+        "market_context": "context_html",
+        "market_segment": "seg_html",
+        "target_org_research": "target_html"
+        }
+        
+        requests.put(f"https://stu.globalknowledgetech.com:8444/project/project-status-update/{project_id}/",headers = {'Content-Type': 'application/json'}, data = json.dumps({"agent_status": f"{report_type} updated"}))
+
+        print("###################################################################################")
+        print("###################################################################################")
+        print(f"{report_type} report stored successfully for project {project_id}")
+        print("###################################################################################")
+        print("###################################################################################")
+        
+    except Exception as e:
+        print(f"Error storing prospect research report: {e}")
+
+def announce_html_finish(callback_context:CallbackContext):
+    project_id = callback_context.state["project_id"]
+    try:
+        project_id = project_id.replace('"','')
+        requests.put(f"https://stu.globalknowledgetech.com:8444/project/project-status-update/{project_id}/",headers = {'Content-Type': 'application/json'}, data = json.dumps({"agent_status": f"Completed"}))
+    except Exception as e:
+        print(f"Error announcing markdown completion: {e}")
 
 def create_blank_project(project_id: str):
     from pymongo import MongoClient
@@ -67,19 +129,11 @@ def update_project_report(project_id: str, report: str, report_type: str, html_r
         {"$set": {report_type: report, f"{report_type}_html":html_report}}
     )
 
-    if html_report !=None or html_report == "":
-        format = "agent_status"
-    else:
-        format = "sub_status"
-
-    if report_type == "prospect_research":
-        message = "Completed"
-    else:
-        message = "updated"
-
-    requests.put(f"https://stu.globalknowledgetech.com:8444/project/project-status-update/{project_id}/",headers = {'Content-Type': 'application/json'}, data = json.dumps({format: f"{report_type} {message}",}))
-
     client.close()
+    if html_report != None or html_report != "":
+        announce_markdown_upload(project_id,report_type)
+    else:
+        announce_html_upload(project_id,report_type)
 
     if result.matched_count == 0:
         raise ValueError(f"No project found with project_id '{project_id}'")

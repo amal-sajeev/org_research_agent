@@ -4,7 +4,7 @@ from google.adk.models import Gemini
 from google.genai import types as genai_types
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.tools.agent_tool import AgentTool
-from .tools.mongoupload import update_project_report, create_blank_project
+from .tools.mongoupload import update_project_report, create_blank_project, announce_markdown_finish, announce_html_finish
 from .sub_agents.segmentation import segmentation_intelligence_agent
 from .sub_agents.target_org_research import sales_intelligence_pipeline, sales_plan_generator
 from .sub_agents.prospect_research import prospect_researcher
@@ -32,6 +32,7 @@ def store_segmentation_report(callback_context: CallbackContext):
             print(f"Segmentation report stored successfully for project {project_id}")
         else:
             print(f"Failed to store segmentation report - project_id: {project_id}, report exists: {bool(segmentation_report)}")
+        
     except Exception as e:
         print(f"Error storing segmentation report: {e}")
 
@@ -507,14 +508,6 @@ determine_sales = LlmAgent(
     output_key="sales_activator"
 )
 
-def harbinger_message(callback_context:CallbackContext):
-    project_id = callback_context.state["project_id"]
-    requests.put(f"https://stu.globalknowledgetech.com:8444/project/project-status-update/{project_id}/",
-    headers = {'Content-Type': 'application/json'},
-    data = json.dumps({"sub_status": f"Completed",}))
-    print("""############################################################################################
-    GALACTUS HAS ARRIVED
-    ################################################################################################""")
 
 harbinger = LlmAgent(
     name = "harbinger",
@@ -522,8 +515,19 @@ harbinger = LlmAgent(
     description = "Announces the end of the markdown reports being generated",
     instruction = "Output the word 'markdown' in capital letters",
     output_key = "harbinger",
-    after_agent_callback = [harbinger_message]
+    after_agent_callback = [announce_markdown_finish]
 )
+
+revelation = LlmAgent(
+    name = "revelation",
+    model = config.worker_model,
+    description = "Announces the end of the HTML reports being generated",
+    instruction = "Output the word 'html' in capital letters",
+    output_key = "revelation",
+    after_agent_callback = [announce_html_finish]
+)
+
+
 # ----------------------------------------------------------------------
 # Simplified Sequential Agent
 # ----------------------------------------------------------------------
@@ -543,7 +547,7 @@ simplified_intelligence_agent = SequentialAgent(
     """,
     sub_agents=[
         input_analyzer,                         # Analyze input + extract project_id
-        project_creator,                        #ms Create blank project in MongoDB
+        project_creator,                        # Create blank project in MongoDB
         determine_sales,
         market_context_prompt_builder,
         market_intelligence_agent,
@@ -556,7 +560,9 @@ simplified_intelligence_agent = SequentialAgent(
         harbinger,
         context_html_copmposer,
         segmentation_html_composer,
-        whether_to_compose    ]
+        whether_to_compose,
+        revelation    
+        ]
 )
 
 root_agent = simplified_intelligence_agent

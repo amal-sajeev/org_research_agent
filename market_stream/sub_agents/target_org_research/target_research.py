@@ -36,6 +36,7 @@ class OrganizationTarget(BaseModel):
     location: str = Field(default="", description="Primary location or headquarters")
 
 
+
 class SalesResearchQuery(BaseModel):
     """Model representing a specific search query for sales intelligence research."""
     search_query: str = Field(
@@ -50,16 +51,26 @@ class SalesResearchQuery(BaseModel):
 
 
 class SalesFeedback(BaseModel):
-    """Model for evaluating sales intelligence research quality."""
-    grade: Literal["pass", "fail"] = Field(
-        description="Evaluation result. 'pass' if research meets sales intelligence standards, 'fail' if needs more depth."
+    """Model for evaluating sales intelligence research quality with graduated standards."""
+    grade: Literal["comprehensive", "sales_ready", "needs_improvement", "insufficient"] = Field(
+        description="Graduated evaluation: 'comprehensive' (Tier 3), 'sales_ready' (Tier 2), 'needs_improvement' (Tier 1), 'insufficient' (requires more research)"
+    )
+    tier_achieved: int = Field(
+        description="Quality tier achieved: 1 (minimum viable), 2 (sales ready), 3 (comprehensive)"
+    )
+    iteration_count: int = Field(
+        description="Current iteration number in the research loop"
     )
     comment: str = Field(
-        description="Detailed evaluation focusing on completeness of product-organization fit analysis, stakeholder identification, and competitive insights."
+        description="Detailed evaluation focusing on what's complete and what gaps remain for sales execution."
+    )
+    missing_critical_elements: List[str] = Field(
+        default=[],
+        description="List of critical missing elements for sales execution"
     )
     follow_up_queries: List[SalesResearchQuery] | None = Field(
         default=None,
-        description="Specific follow-up searches needed to fill sales intelligence gaps."
+        description="Maximum 4 focused follow-up searches targeting highest-impact gaps."
     )
 
 
@@ -163,7 +174,7 @@ def citation_replacement_callback(
 
 # --- Custom Agent for Loop Control ---
 class SalesEscalationChecker(BaseAgent):
-    """Checks sales research evaluation and escalates to stop the loop if grade is 'pass'."""
+    """Enhanced escalation checker with circuit breaker logic and better state management."""
 
     def __init__(self, name: str):
         super().__init__(name=name)
@@ -171,141 +182,87 @@ class SalesEscalationChecker(BaseAgent):
     async def _run_async_impl(
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
+        
+        # Track iteration count for circuit breaker
+        iteration_count = ctx.session.state.get("loop_iteration_count", 0)
+        ctx.session.state["loop_iteration_count"] = iteration_count + 1
+        
+        # Circuit breaker: force escalation after max iterations
+        if iteration_count >= config.max_search_iterations:
+            logging.info(f"[{self.name}] Maximum iterations ({config.max_search_iterations}) reached. Forcing escalation.")
+            yield Event(author=self.name, actions=EventActions(escalate=True))
+            return
+
+        # Get evaluation result with enhanced validation
         evaluation_result = ctx.session.state.get("sales_research_evaluation")
         
-        # More robust evaluation checking
-        if evaluation_result:
-            grade = evaluation_result.get("grade")
-            if grade == "pass":
-                logging.info(
-                    f"[{self.name}] Sales intelligence research evaluation PASSED. Escalating to stop loop."
-                )
+        if not evaluation_result:
+            logging.warning(f"[{self.name}] No evaluation result found in state. Keys available: {list(ctx.session.state.keys())}")
+            yield Event(author=self.name, actions=EventActions(escalate=True))
+            return
+            
+        grade = evaluation_result.get("grade")
+        tier_achieved = evaluation_result.get("tier_achieved", 0)
+        
+        # Enhanced escalation logic with graduated standards
+        if grade in ["comprehensive", "sales_ready"]:
+            logging.info(f"[{self.name}] Research achieved {grade} quality (Tier {tier_achieved}). Escalating to complete report.")
+            yield Event(author=self.name, actions=EventActions(escalate=True))
+            return
+        elif grade == "needs_improvement":
+            # Allow one more iteration for Tier 1, then escalate
+            if iteration_count >= 2:
+                logging.info(f"[{self.name}] Tier 1 quality achieved after {iteration_count} iterations. Escalating with current research.")
                 yield Event(author=self.name, actions=EventActions(escalate=True))
                 return
-            elif grade == "fail":
-                logging.info(
-                    f"[{self.name}] Sales research evaluation FAILED. Loop will continue with follow-up research."
-                )
+            else:
+                logging.info(f"[{self.name}] Tier 1 quality - allowing one more improvement iteration.")
                 yield Event(author=self.name)
                 return
-        
-        # Fallback: if no clear evaluation, escalate to prevent infinite loops
-        logging.warning(
-            f"[{self.name}] No clear evaluation result found. Escalating to prevent infinite loop."
-        )
-        yield Event(author=self.name, actions=EventActions(escalate=True))
+        else:  # insufficient
+            logging.info(f"[{self.name}] Research insufficient (iteration {iteration_count}). Continuing loop.")
+            yield Event(author=self.name)
+            return
 
 
-# --- ENHANCED AGENT DEFINITIONS ---
-sales_plan_generator = LlmAgent(
-    model = config.search_model,
-    name="sales_plan_generator",
-    description="Generates comprehensive sales intelligence research plans for product-organization fit analysis.",
-    instruction=f"""
-    You are an expert sales intelligence strategist specializing in product-market fit analysis and account-based selling research.
-    
-    Your task is to create a systematic research plan to investigate target organizations and products for optimal sales alignment.
+# Enhanced Structured Output Models
+class StakeholderProfile(BaseModel):
+    """Detailed stakeholder profile for sales targeting."""
+    name: str = Field(description="Full name of stakeholder")
+    title: str = Field(description="Job title/role")
+    department: str = Field(description="Department or division")
+    linkedin_url: str = Field(default="", description="LinkedIn profile URL if found")
+    email: str = Field(default="", description="Email address if discoverable")
+    phone: str = Field(default="", description="Phone number if available")
+    influence_level: Literal["decision_maker", "influencer", "champion", "gatekeeper"] = Field(
+        description="Level of influence in buying process"
+    )
+    background: str = Field(default="", description="Professional background relevant to sales approach")
+    recent_activity: str = Field(default="", description="Recent posts, initiatives, or public activity")
 
-    **INPUT ANALYSIS:**
-    You will receive:
-    - Products: List of products/services to be sold
-    - Target Organizations: List of organizations to research as potential clients
-    - Additional Context: Any specific requirements or focus areas
 
-    **RESEARCH PLAN STRUCTURE:**
-    Create a comprehensive plan that covers these essential areas:
+class TechStackDetail(BaseModel):
+    """Detailed technology stack information."""
+    solution_category: str = Field(description="Category of technology solution")
+    vendor_name: str = Field(description="Name of current vendor/provider")
+    product_name: str = Field(description="Specific product or service name")
+    implementation_date: str = Field(default="", description="When solution was implemented")
+    contract_details: str = Field(default="", description="Contract length, renewal date if known")
+    satisfaction_indicators: str = Field(default="", description="User satisfaction signals from reviews/forums")
+    integration_complexity: str = Field(default="", description="Assessment of integration complexity")
 
-    **1. Product Intelligence Research Goals:**
-    For each product:
-    - Competitive landscape mapping and market positioning analysis
-    - Customer testimonials, case studies, and ROI metrics gathering
-    - Pricing information and value proposition documentation
-    - Technical requirements and integration capabilities research
-    - Ideal customer profile identification and use case analysis
 
-    **2. Organization Intelligence Research Goals:**
-    For each target organization:
-    - Company fundamentals (size, revenue, leadership, recent news)
-    - Organizational structure and decision-making processes
-    - Business priorities, strategic initiatives, and pain points
-    - Financial health indicators and budget capacity assessment
-    - Technology modernization needs and growth plans
+class CompetitiveIntelligence(BaseModel):
+    """Competitive analysis for specific product-organization combination."""
+    competitor_name: str = Field(description="Name of competing solution")
+    market_position: str = Field(description="Market position vs our product")
+    pricing_comparison: str = Field(default="", description="Pricing comparison if available")
+    feature_comparison: str = Field(default="", description="Key feature differences")
+    customer_sentiment: str = Field(default="", description="Customer reviews and sentiment")
+    weakness_opportunities: List[str] = Field(default=[], description="Competitive weaknesses to exploit")
 
-    **3. Technology & Vendor Landscape Research Goals:**
-    For each target organization:
-    - Current technology stack and digital infrastructure mapping
-    - Existing vendor relationships and solution provider identification
-    - Contract renewal timelines and vendor satisfaction assessment
-    - Technology gaps and integration requirement analysis
-    - Digital transformation initiatives and modernization projects
 
-    **4. Stakeholder Mapping Research Goals:**
-    For each target organization:
-    - Key decision-maker identification with roles and contact details
-    - Potential champion and influencer mapping in relevant departments
-    - Reporting structures and decision-making process analysis
-    - Recent personnel changes and hiring pattern assessment
-    - Communication preferences and engagement channel identification
-
-    **5. Competitive & Risk Assessment Research Goals:**
-    Cross-analysis requirements:
-    - Competitive threat identification for each product-organization combination
-    - Budget constraint and buying timeline indicator assessment
-    - Cultural fit and change management consideration analysis
-    - Regulatory compliance and security requirement evaluation
-    - Common objection and sales obstacle identification
-
-    **DELIVERABLE REQUIREMENTS:**
-    The research must enable creation of:
-    - Comprehensive sales intelligence report with 9 standardized sections
-    - Product-organization fit analysis matrix with specific scoring
-    - Stakeholder engagement strategy with contact details
-    - Competitive positioning recommendations per combination
-    - Risk assessment and mitigation strategies
-
-    **SEARCH GUIDANCE FOR RESEARCHERS:**
-    Provide specific search patterns and methodologies:
-    
-    Product Research Patterns:
-    - "[Product name] competitors comparison features pricing 2024"
-    - "[Product category] market analysis leaders customer reviews"
-    - "[Product name] case studies ROI success stories testimonials"
-    - "[Product name] pricing model integration capabilities technical"
-
-    Organization Research Patterns:
-    - "[Org name] leadership team executives organizational chart"
-    - "[Org name] financial revenue funding budget technology spending"
-    - "[Org name] technology stack vendors solutions partnerships"
-    - "[Org name] strategic initiatives news 2024 business priorities"
-    - "[Org name] procurement process vendor selection decision makers"
-
-    Stakeholder Research Patterns:
-    - "[Org name] CTO CIO IT director technology leadership"
-    - "[Org name] LinkedIn employees department heads contact information"
-    - "[Org name] recent hires technology management [product category]"
-
-    Competitive Analysis Patterns:
-    - "[Org name] [product category] current solutions vendor contracts"
-    - "[Product competitors] [Org name] implementation usage satisfaction"
-    - "[Org name] RFP requirements technology selection criteria"
-
-    **PLAN COMPLETION CHECKLIST:**
-    Ensure your plan will generate:
-    - Specific competitive intelligence for each product
-    - Named stakeholders with contact details for each organization
-    - Current technology/vendor landscape per organization
-    - Product-organization fit assessment methodology
-    - Sales engagement strategy framework
-    - Risk identification and mitigation approaches
-
-    Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
-    
-    Create a detailed research plan that will generate comprehensive, actionable sales intelligence for account-based selling strategies.
-    """,
-    output_key="sales_research_plan",
-    tools=[google_search],
-)
-
+# --- UTILITY AGENTS --- #
 sales_section_planner = LlmAgent(
     model = config.worker_model,
     name="sales_section_planner",
@@ -399,182 +356,507 @@ sales_section_planner = LlmAgent(
     output_key="sales_report_sections",
 )
 
-sales_researcher = LlmAgent(
+enhanced_sales_search = LlmAgent(
     model = config.search_model,
-    name="sales_researcher",
-    description="Specialized sales intelligence researcher focusing on product-organization fit analysis and competitive positioning.",
+    name="enhanced_sales_search",
+    description="Executes focused follow-up searches targeting highest-impact sales intelligence gaps.",
     planner=BuiltInPlanner(
         thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
     ),
     instruction="""
-    You are a specialized sales intelligence researcher with expertise in product-market fit analysis, competitive intelligence, and account-based selling research.
+    You are a specialist sales intelligence researcher executing precision follow-up research to address the highest-impact gaps identified by evaluation.
 
-    **EXECUTION APPROACH:**
-    You must complete ALL research phases in a single response. Do not stop until you have gathered information for every product and organization mentioned in the research plan.
+    **CRITICAL EXECUTION REQUIREMENTS:**
+    1. **Execute ALL Follow-Up Queries:** Run every single query in 'follow_up_queries' from the evaluation
+    2. **Gap-Focused Approach:** Target specific missing elements rather than broad research
+    3. **Efficient Integration:** Merge new findings with existing research without duplication
+    4. **Quality Enhancement:** Focus on filling the most critical sales intelligence gaps
 
-    **CORE RESEARCH PRINCIPLES:**
-    - Sales Focus: Prioritize information directly impacting sales conversations and deal progression
-    - Competitive Awareness: Always research competitive landscape and incumbent solutions
-    - Stakeholder Mapping: Identify decision-makers, influencers, and potential champions
-    - Opportunity Sizing: Assess budget capacity, timing, and buying signals
-    - Risk Assessment: Flag potential obstacles, competitive threats, and misalignment factors
+    **EXECUTION PROCESS:**
+    1. **Load Context:** Review 'sales_research_findings' and 'sales_research_evaluation'
+    2. **Execute Targeted Searches:** Run ALL queries in 'follow_up_queries' systematically
+    3. **Prioritize High-Impact Information:**
+       - Stakeholder names and contact details (highest priority)
+       - Competitive intelligence and positioning gaps
+       - Business priorities and strategic initiatives
+       - Current vendor/technology landscape details
+    4. **Integrate Seamlessly:** Combine with existing findings in organized format
 
-    **MANDATORY RESEARCH COMPLETION:**
-    You must research EVERY item listed in the sales research plan. For each product and organization:
+    **SEARCH OPTIMIZATION STRATEGIES:**
+    - Use exact query terms from follow-up list - they target specific gaps
+    - When seeking stakeholders, try multiple search patterns:
+      * "[Org name] [title] LinkedIn profile contact"
+      * "[Org name] leadership team [department]"  
+      * "[Org name] [product category] decision makers"
+    - For competitive intelligence, search both directions:
+      * "[Product] competitors vs [specific competitor]"
+      * "[Org name] [product category] vendor selection"
+    - Verify current information with "2024" or "current" qualifiers
 
-    **Phase 1: Product Intelligence Research**
-    For each product mentioned in the research plan:
+    **INTEGRATION STANDARDS:**
+    - **Preserve Unique Previous Findings:** Keep all valuable existing research
+    - **Add New Intelligence:** Clearly integrate new discoveries
+    - **Resolve Conflicts:** Where new info contradicts old, prioritize newer/more specific data
+    - **Enhance Cross-Analysis:** Strengthen product-organization fit assessments
+    - **Maintain Organization:** Use clear section headers for easy navigation
 
-    *Market Positioning & Competition:*
-    - "[Product name] competitors comparison features pricing"
-    - "[Product category] market leaders 2024 analysis"
-    - "[Product name] vs [known competitor] differences"
-    - "[Product name] customer reviews G2 Capterra TrustRadius"
+    **CRITICAL SUCCESS METRICS:**
+    Your enhanced research should achieve:
+    - Specific stakeholder names and roles for each organization
+    - Clear competitive positioning for each product
+    - Business priorities and pain points for each organization
+    - Technology/vendor landscape details for each organization
+    - Enhanced product-organization fit analysis with supporting evidence
 
-    *Value Proposition & Use Cases:*
-    - "[Product name] case studies ROI customer success"
-    - "[Product name] pricing model cost benefits"
-    - "[Product name] integration capabilities API technical"
-    - "[Product category] buyer guide selection criteria"
+    **OUTPUT FORMAT:**
+    Create a comprehensive, integrated research report:
 
-    **Phase 2: Organization Intelligence Research**
-    For each target organization:
-
-    *Company Fundamentals:*
-    - "[Org name] official website about leadership team"
-    - "[Org name] revenue financial performance annual report"
-    - "[Org name] recent news 2024 strategic initiatives"
-    - "[Org name] company size employees headcount"
-
-    *Decision-Making Structure:*
-    - "[Org name] organizational chart executives departments"
-    - "[Org name] CTO CIO IT leadership technology team"
-    - "[Org name] procurement process vendor selection"
-    - "[Org name] LinkedIn employees leadership profiles"
-
-    **Phase 3: Technology & Vendor Landscape**
-    For each target organization:
-
-    *Current Technology Stack:*
-    - "[Org name] technology stack tools software vendors"
-    - "[Org name] [product category] current solutions"
-    - "[Org name] vendor partnerships technology integrations"
-    - "[Org name] digital transformation initiatives modernization"
-
-    *Vendor Relationships:*
-    - "[Org name] vendor contracts renewals procurement announcements"
-    - "[Org name] software implementations technology deployments"
-    - "[Org name] vendor satisfaction reviews complaints"
-
-    **Phase 4: Stakeholder Research**
-    For key personnel at each organization:
-
-    *Decision-Maker Analysis:*
-    - "[Person name] [Org name] LinkedIn background experience"
-    - "[Department head] [Org name] technology priorities initiatives"
-    - "[Org name] recent hires leadership changes [product category]"
-    - "[Org name] conference speakers technology presentations"
-
-    **Phase 5: Competitive & Market Research**
-    Cross-analysis research:
-
-    *Competitive Positioning:*
-    - "[Competitor name] [Org name] partnership implementation"
-    - "[Product category] market share [Org name] industry"
-    - "[Org name] RFP requirements vendor selection [product category]"
-    - "[Org name] budget technology spending [current year]"
-
-    **CRITICAL COMPLETION REQUIREMENTS:**
-    1. Execute searches systematically through all 5 phases
-    2. Gather information for EVERY product and organization combination
-    3. Provide comprehensive findings covering all research goals
-    4. Include specific stakeholder names, competitive intelligence, and technology details
-    5. Organize findings clearly by phase and entity
-    6. Do not leave any research phase incomplete
-
-    **OUTPUT STRUCTURE:**
-    Organize your complete findings as:
+    ## Enhanced Stakeholder Intelligence
+    [All decision-makers, influencers, contacts by organization]
     
-    ## Product Intelligence Findings
-    [Detailed findings for each product]
+    ## Comprehensive Business Intelligence
+    [Strategic priorities, pain points, initiatives by organization]
     
-    ## Organization Intelligence Findings  
-    [Detailed findings for each organization]
+    ## Complete Product Competitive Analysis
+    [Market positioning, competitors, differentiation by product]
     
-    ## Technology & Vendor Analysis
-    [Current solutions and vendor relationships per organization]
+    ## Full Technology & Vendor Landscape
+    [Current solutions, vendor relationships, gaps by organization]
     
-    ## Stakeholder Mapping Results
-    [Decision-makers and contacts identified]
-    
-    ## Competitive Intelligence Summary
-    [Market positioning and competitive threats]
-    
-    ## Product-Organization Fit Assessment
-    [Cross-analysis of opportunities and challenges]
+    ## Enhanced Product-Organization Fit Assessment
+    [Detailed cross-analysis with supporting evidence and opportunity scoring]
 
-    Complete ALL research phases before finishing your response. Your research must provide actionable intelligence for account-based selling and product positioning strategies.
+    **MANDATORY:** Execute every follow-up query and provide enhanced, integrated intelligence that addresses all evaluation gaps.
     """,
     tools=[google_search],
-    output_key="sales_research_findings",
+    output_key="sales_research_findings", 
     after_agent_callback=collect_research_sources_callback,
 )
 
 
-sales_evaluator = LlmAgent(
-    model = config.critic_model,
-    name="sales_evaluator",
-    description="Evaluates sales intelligence research completeness and identifies gaps for product-organization fit analysis.",
+# --- SPECIALIZED AGENTS --- # 
+
+# Specialized Stakeholder Discovery Agent
+stakeholder_discovery_agent = LlmAgent(
+    model=config.search_model,
+    name="stakeholder_discovery_agent",
+    description="Specialized agent focused exclusively on discovering specific stakeholder names and contact information.",
+    planner=BuiltInPlanner(
+        thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
+    ),
+    instruction="""
+    You are a specialist in stakeholder discovery and contact intelligence for B2B sales research.
+
+    **MISSION:** Find SPECIFIC NAMES of decision-makers, influencers, and gatekeepers at target organizations.
+
+    **STAKEHOLDER DISCOVERY METHODOLOGY:**
+
+    **Primary Search Patterns (Execute ALL for each organization):**
+    
+    1. **Executive Leadership Discovery:**
+    - "[Org name] CEO CTO CIO CISO VP technology leadership names"
+    - "[Org name] executive team management directory"
+    - "[Org name] leadership team LinkedIn profiles"
+    - "site:linkedin.com [Org name] CTO" (and repeat for CIO, CISO, VP Engineering)
+
+    2. **Department Head Identification:**
+    - "[Org name] IT director technology manager infrastructure names"
+    - "[Org name] engineering leadership software development managers"
+    - "[Org name] digital transformation officer innovation director"
+    - "[Org name] procurement director purchasing manager vendor relations"
+
+    3. **Recent Personnel Intelligence:**
+    - "[Org name] recent hires LinkedIn technology management 2024"
+    - "[Org name] new leadership appointments technology team"
+    - "[Org name] press releases executive hires leadership changes"
+    - "[Org name] company announcements new CTO CIO appointments"
+
+    4. **Specialized Role Discovery:**
+    - "[Org name] [product category] manager director specialist"
+    - "[Org name] vendor management technology partnerships lead"
+    - "[Org name] business development technology solutions"
+    - "[Org name] innovation lab digital transformation team lead"
+
+    **CONTACT INFORMATION STRATEGIES:**
+    Once names are identified, search for:
+    - "[Person name] [Org name] LinkedIn profile contact information"
+    - "[Person name] [Org name] email contact speaker bio"
+    - "[Org name] employee directory contact [department]"
+    - "[Person name] conference speaker bio contact [industry event]"
+
+    **VERIFICATION AND CONTEXT BUILDING:**
+    For each identified stakeholder:
+    - "[Person name] [Org name] background experience projects"
+    - "[Person name] LinkedIn posts recent activity technology"
+    - "[Person name] [Org name] technology initiatives projects"
+    - "[Person name] [Org name] conference presentations speaking engagements"
+
+    **MANDATORY SEARCH COMPLETENESS:**
+    For EACH target organization, you must execute:
+    - At least 8 stakeholder discovery searches targeting different roles
+    - At least 3 contact information searches for identified names
+    - At least 2 verification searches for key decision-makers
+    - At least 1 recent activity search for each named stakeholder
+
+    **OUTPUT REQUIREMENTS:**
+    Deliver comprehensive stakeholder profiles:
+
+    ## Stakeholder Discovery Results
+
+    ### [Organization Name]
+    **Executive Decision Makers:**
+    - **[Full Name]**, [Exact Title] - [Department]
+      - LinkedIn: [URL if found] | Email: [if discovered] | Phone: [if available]
+      - Background: [Relevant experience, tenure, previous roles]
+      - Recent Activity: [LinkedIn posts, company initiatives, speaking events]
+      - Influence Assessment: [Why they matter for our product category]
+
+    **Department Influencers:**
+    - **[Full Name]**, [Exact Title] - [Department]
+      - [Same detail structure as above]
+
+    **Potential Champions:**
+    - **[Full Name]**, [Exact Title] - [Department]
+      - [Same detail structure plus why they'd champion our solution]
+
+    **Procurement/Gatekeeper Contacts:**
+    - **[Full Name]**, [Exact Title] - [Process they control]
+      - [Contact details and process insights]
+
+    ### Contact Intelligence Summary
+    - **Immediate Reachable:** [Names with direct contact info]
+    - **LinkedIn Accessible:** [Names with LinkedIn profiles for connection]
+    - **Referral Required:** [Names requiring introduction or referral]
+    - **Engagement Opportunities:** [Conferences, events, mutual connections]
+
+    **CRITICAL SUCCESS METRICS:**
+    - Minimum 3 specific names per organization (not just titles)
+    - At least 1 decision-maker name per organization with background
+    - Contact pathway identified for each named stakeholder
+    - Recent activity context for engagement planning
+
+    **SEARCH PERSISTENCE:** 
+    If initial searches don't yield names, try alternative approaches:
+    - Company press releases with quoted executives
+    - Industry publication interviews or quotes
+    - Conference speaker lists and panel participants
+    - Partnership announcements with named contacts
+    - Acquisition or funding announcements with leadership quotes
+
+    Do not conclude until you have identified specific stakeholder names. Generic titles without names indicate insufficient research depth.
+    """,
+    tools=[google_search],
+    output_key="stakeholder_intelligence",
+    after_agent_callback=collect_research_sources_callback,
+)
+
+# Competitive Intelligence Specialist
+competitive_intelligence_agent = LlmAgent(
+    model=config.search_model,
+    name="competitive_intelligence_agent", 
+    description="Specialist focused on detailed competitive analysis and incumbent solution mapping.",
+    planner=BuiltInPlanner(
+        thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
+    ),
+    instruction="""
+    You are a competitive intelligence specialist focusing on incumbent solution analysis and market positioning.
+
+    **COMPETITIVE RESEARCH METHODOLOGY:**
+
+    **Phase 1: Current Solution Discovery**
+    For each organization, identify existing solutions:
+    - "[Org name] current [product category] vendor solution provider"
+    - "[Org name] technology stack [product category] tools software"
+    - "[Org name] vendor partnerships technology contracts"
+    - "[Org name] annual report technology investments vendor spend"
+
+    **Phase 2: Competitor Analysis**
+    For each identified competitor/incumbent:
+    - "[Competitor name] vs [our product] comparison features pricing"
+    - "[Competitor name] customer reviews complaints weaknesses"
+    - "[Competitor name] [Org name] implementation case study"
+    - "[Competitor name] market share positioning [product category]"
+
+    **Phase 3: Market Intelligence**
+    - "[Product category] market analysis leaders pricing 2024"
+    - "[Org name] vendor selection criteria RFP requirements"
+    - "[Product category] switching costs integration complexity"
+    - "[Org name] vendor dissatisfaction contract renewal issues"
+
+    **Phase 4: Opportunity Assessment**
+    - "[Org name] technology modernization upgrade plans 2024"
+    - "[Org name] contract renewal dates vendor agreements"
+    - "[Org name] budget constraints technology spending limits"
+    - "[Org name] [product category] procurement timeline vendor evaluation"
+
+    **OUTPUT STRUCTURE:**
+
+    ## Competitive Landscape Analysis
+
+    ### [Organization Name] - Current Solutions
+    **[Product Category] Incumbent:**
+    - **Vendor:** [Specific vendor name]
+    - **Solution:** [Specific product/service name]
+    - **Implementation:** [When deployed, scope, users]
+    - **Contract Status:** [Length, renewal date if known]
+    - **Satisfaction Signals:** [Review scores, complaint indicators]
+
+    ### Competitive Threat Assessment
+    **Direct Competitors:**
+    - **[Competitor Name]** vs Our Product
+      - Market Position: [Leader/Challenger/Niche]
+      - Pricing: [How they compare to our pricing]
+      - Key Advantages: [Their strongest features]
+      - Weaknesses: [Gaps our product addresses]
+      - Customer Sentiment: [Review themes, satisfaction levels]
+
+    ### Switching Opportunity Analysis
+    **[Organization + Product Combination]:**
+    - **Switching Likelihood:** [High/Medium/Low with reasoning]
+    - **Key Obstacles:** [Technical, contractual, cultural barriers]
+    - **Competitive Advantages:** [How we win vs incumbent]
+    - **Timing Indicators:** [Contract renewal, dissatisfaction signals]
+    - **Budget Assessment:** [Technology spending capacity, procurement cycles]
+
+    Execute comprehensive competitive research for every product-organization combination. Focus on actionable intelligence that informs sales strategy and positioning.
+    """,
+    tools=[google_search],
+    output_key="competitive_intelligence",
+    after_agent_callback=collect_research_sources_callback,
+)
+
+# --- PRIMARY AGENTS --- #
+
+# Enhanced Sales Researcher with Multi-Phase Deep Dive
+enhanced_sales_researcher = LlmAgent(
+    model=config.search_model,
+    name="enhanced_sales_researcher",
+    description="Deep-dive sales intelligence researcher with specialized search strategies for stakeholder identification and competitive analysis.",
+    planner=BuiltInPlanner(
+        thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
+    ),
+    instruction="""
+    You are an elite sales intelligence researcher specializing in deep stakeholder discovery and competitive analysis.
+
+    **ENHANCED RESEARCH METHODOLOGY:**
+    Execute systematic multi-phase research with escalating search sophistication.
+
+    **PHASE 1: FOUNDATION RESEARCH (Standard Searches)**
+    Execute baseline searches for each entity:
+
+    For Products:
+    - "[Product name] competitors comparison 2024"
+    - "[Product name] pricing model features benefits"
+    - "[Product name] customer reviews case studies ROI"
+    - "[Product category] market analysis leaders"
+
+    For Organizations:
+    - "[Org name] company information revenue size employees"
+    - "[Org name] news 2024 strategic initiatives announcements"
+    - "[Org name] leadership team executives organizational chart"
+    - "[Org name] technology stack vendor partnerships"
+
+    **PHASE 2: STAKEHOLDER DEEP DIVE (Advanced People Search)**
+    Critical: Use multiple search patterns to find SPECIFIC NAMES:
+
+    Executive Leadership Discovery:
+    - "[Org name] CEO CTO CIO CISO VP leadership team LinkedIn"
+    - "[Org name] executive team management board directors"
+    - "[Org name] leadership changes 2024 new hires executives"
+    - "site:linkedin.com [Org name] CTO OR CIO OR 'VP Technology'"
+
+    Department-Specific Leaders:
+    - "[Org name] IT director technology manager infrastructure"
+    - "[Org name] procurement director purchasing manager vendor relations"
+    - "[Org name] digital transformation officer innovation leader"
+    - "[Org name] [product category] manager director lead"
+
+    Recent Personnel Intelligence:
+    - "[Org name] recent hires LinkedIn technology [product category]"
+    - "[Org name] job postings technology roles hiring"
+    - "[Org name] conference speakers technology presentations 2024"
+    - "[Org name] press releases leadership appointments"
+
+    **PHASE 3: COMPETITIVE & VENDOR INTELLIGENCE (Deep Market Analysis)**
+    
+    Current Solution Mapping:
+    - "[Org name] current [product category] solution vendor"
+    - "[Org name] technology vendors partnerships contracts"
+    - "[Org name] [specific competitor] implementation usage"
+    - "[Org name] vendor selection RFP requirements [product category]"
+
+    Competitive Threat Assessment:
+    - "[Main competitor] [Org name] customer reference case study"
+    - "[Org name] [product category] budget spending technology investment"
+    - "[Org name] vendor dissatisfaction issues problems reviews"
+    - "[Org name] technology modernization upgrade plans"
+
+    **PHASE 4: BUSINESS INTELLIGENCE (Strategic Context)**
+    
+    Business Priority Mapping:
+    - "[Org name] business strategy 2024 priorities initiatives"
+    - "[Org name] challenges pain points business problems"
+    - "[Org name] growth plans expansion investment areas"
+    - "[Org name] quarterly earnings technology spending"
+
+    Buying Signal Detection:
+    - "[Org name] RFP tender procurement [product category] 2024"
+    - "[Org name] budget allocation technology investment"
+    - "[Org name] vendor evaluation selection process"
+    - "[Org name] technology roadmap digital transformation"
+
+    **PHASE 5: CONTACT & ENGAGEMENT INTELLIGENCE**
+    
+    Contact Discovery:
+    - "[Person name] [Org name] contact email phone LinkedIn"
+    - "[Org name] sales contact business development"
+    - "[Org name] technology evaluation team contact"
+    - "[Org name] procurement process vendor onboarding contact"
+
+    Engagement Context:
+    - "[Person name] [Org name] recent posts LinkedIn activity"
+    - "[Org name] events conferences technology presentations"
+    - "[Org name] partnership announcements vendor relationships"
+    - "[Org name] industry associations technology groups"
+
+    **ENHANCED SEARCH TACTICS:**
+    - **Name Discovery:** Use multiple search angles: company + title, department + company, recent hires + company
+    - **Verification:** Cross-reference names across LinkedIn, company websites, and press releases
+    - **Context Building:** Search for each identified person individually for background and contact info
+    - **Relationship Mapping:** Search for connections between stakeholders and current vendors
+    - **Intelligence Validation:** Verify competitive intelligence with multiple sources
+
+    **CRITICAL SUCCESS METRICS:**
+    Your research MUST deliver:
+    - At least 3 specific stakeholder names per organization with titles and departments
+    - Current technology vendors and contract details for each organization
+    - Specific competitive threats and incumbent solutions per product-organization pair
+    - Business priorities and strategic initiatives for each organization
+    - Contact information and engagement context for key stakeholders
+
+    **OUTPUT REQUIREMENT:**
+    Structure your findings with clear sections:
+    
+    ## Stakeholder Intelligence (Names Required)
+    ### [Organization Name]
+    - **Decision Makers:** [Name], [Title], [Department] - [Background/Context]
+    - **Influencers:** [Name], [Title], [Department] - [Recent Activity/Posts]
+    - **Champions:** [Name], [Title], [Department] - [Why They'd Support Solution]
+    - **Gatekeepers:** [Name], [Title] - [Contact Method/Process]
+
+    ## Technology & Vendor Landscape (Current Solutions)
+    ### [Organization Name]
+    - **[Product Category]:** Current vendor, solution name, implementation date, contract status
+    - **Integration Partners:** Key technology partnerships affecting our product fit
+    - **Vendor Satisfaction:** Review signals, complaint indicators, renewal likelihood
+
+    ## Competitive Intelligence (Specific Threats)
+    ### [Product] vs [Organization] 
+    - **Incumbent Solutions:** [Specific competitor], [Market position], [Customer satisfaction]
+    - **Competitive Weaknesses:** [Specific gaps our product addresses]
+    - **Switching Barriers:** [Technical, contractual, cultural obstacles]
+
+    ## Business Context & Buying Signals
+    ### [Organization Name]
+    - **Strategic Priorities:** [Specific 2024 initiatives]
+    - **Pain Points:** [Documented business challenges]
+    - **Technology Investment:** [Budget indicators, spending patterns]
+    - **Procurement Signals:** [RFPs, vendor evaluations, hiring patterns]
+
+    Execute ALL phases systematically. Do not conclude until you have specific stakeholder names and competitive intelligence for every product-organization combination.
+    """,
+    tools=[google_search],
+    output_key="enhanced_sales_research_findings",
+    after_agent_callback=collect_research_sources_callback,
+)
+
+# Enhanced Stakeholder-Focused Evaluator
+enhanced_sales_evaluator = LlmAgent(
+    model=config.critic_model,
+    name="enhanced_sales_evaluator", 
+    description="Evaluates sales intelligence with strict focus on stakeholder identification and actionable sales insights.",
     instruction=f"""
-    You are a senior sales intelligence analyst evaluating research for completeness and sales actionability.
+    You are a senior sales intelligence quality assessor with expertise in account-based selling requirements.
 
-    **EVALUATION METHODOLOGY:**
-    Review the 'sales_research_findings' and apply STRICT evaluation criteria. Be precise about what constitutes "pass" vs "fail".
+    **ENHANCED EVALUATION FRAMEWORK:**
 
-    **PASS CRITERIA (ALL must be met):**
-    1. **Product Intelligence Complete:** Each product has competitive analysis, customer testimonials, pricing info, and technical requirements
-    2. **Organization Intelligence Complete:** Each organization has company fundamentals, leadership details, business priorities, and financial indicators  
-    3. **Technology Analysis Complete:** Each organization has current vendor landscape, technology stack details, and contract information
-    4. **Stakeholder Mapping Complete:** Specific decision-makers identified with names, roles, and contact details for each organization
-    5. **Competitive Intelligence Complete:** Direct competitors identified for each product-organization combination
-    6. **Cross-Analysis Present:** Product-organization fit assessment completed for all combinations
+    **TIER 3 - COMPREHENSIVE (grade: "comprehensive"):**
+    STAKEHOLDER REQUIREMENTS:
+    - Minimum 4 specific stakeholder names per organization with titles and departments
+    - At least 2 decision-makers identified with background context
+    - Contact information (LinkedIn, email, or phone) for at least 50% of identified stakeholders
+    - Recent activity or engagement context for key stakeholders
 
-    **AUTOMATIC FAIL CONDITIONS:**
-    - Missing competitive analysis for any product
-    - No specific stakeholder names/contacts for any organization  
-    - Current vendor/technology solutions not identified for any organization
-    - Business priorities or pain points missing for any organization
-    - No product-organization fit assessment provided
-    - Research findings are generic or lack sales-specific intelligence
+    COMPETITIVE INTELLIGENCE:
+    - Current incumbent solutions identified for each product category per organization
+    - Specific competitive positioning analysis with feature/price comparisons
+    - Vendor satisfaction indicators and contract renewal timelines
+    - Competitive weaknesses and switching opportunity assessment
 
-    **EVALUATION DECISION LOGIC:**
-    1. First, check if ALL core elements exist for ALL entities
-    2. If any major element is missing → Grade "fail"
-    3. If all elements exist but lack depth → Grade "fail" 
-    4. Only grade "pass" if research is comprehensive AND immediately actionable for sales
+    BUSINESS CONTEXT:
+    - Documented strategic priorities and pain points for each organization
+    - Technology investment patterns and budget indicators
+    - Procurement processes and vendor selection criteria
+    - Buying signals and timing indicators
 
-    **FOLLOW-UP QUERY GENERATION (for "fail" grades):**
-    Generate 5-8 highly specific queries targeting the most critical gaps:
-    - Target specific competitive intelligence gaps
-    - Address missing stakeholder identification
-    - Fill vendor/technology landscape holes  
-    - Complete product-organization fit analysis
-    - Focus on actionable sales intelligence needs
+    **TIER 2 - SALES READY (grade: "sales_ready"):**
+    STAKEHOLDER REQUIREMENTS:
+    - Minimum 2 specific stakeholder names per organization with accurate titles
+    - At least 1 confirmed decision-maker per organization
+    - Department or reporting structure context for each stakeholder
+    - LinkedIn profiles or company directory confirmation for key contacts
 
-    **EXAMPLE FAIL SCENARIOS:**
-    - "General company information found but no specific CTO/IT leadership contacts identified"
-    - "Product features listed but no competitive comparison or customer testimonials"
-    - "Company priorities mentioned but current technology vendors not researched"
-    - "Basic org structure found but no specific decision-maker mapping for product categories"
+    COMPETITIVE INTELLIGENCE:
+    - At least 1 current vendor/solution identified per organization in relevant category
+    - Basic competitive positioning for each product vs. incumbents
+    - General market position and customer sentiment for main competitors
+    - Identified switching barriers or competitive advantages
 
-    **EXAMPLE PASS SCENARIO:**
-    - Specific stakeholder names and contact info for each org
-    - Detailed competitive landscape per product-org combination
-    - Current vendor relationships and renewal timelines identified
-    - Clear product-organization fit scores with supporting evidence
-    - Business priorities aligned with product value propositions
+    BUSINESS CONTEXT:
+    - Core business priorities or strategic initiatives identified per organization
+    - Basic technology modernization needs or digital transformation indicators
+    - General budget capacity or procurement approach signals
 
-    Be demanding about research quality. Sales teams need specific, actionable intelligence, not general company overviews.
+    **TIER 1 - NEEDS IMPROVEMENT (grade: "needs_improvement"):**
+    MINIMUM STAKEHOLDER REQUIREMENTS:
+    - At least 1 specific stakeholder name per organization with correct title
+    - Department identification for technology or procurement roles
+    - Some evidence of decision-making structure or process
+
+    MINIMUM COMPETITIVE INTELLIGENCE:
+    - General competitive landscape awareness for each product
+    - Some current technology vendor identification per organization
+    - Basic market positioning context
+
+    **INSUFFICIENT (grade: "insufficient"):**
+    - Generic titles without specific names ("CTO", "IT Director" without actual names)
+    - No current vendor/solution identification
+    - No specific business priorities or pain points
+    - No competitive analysis or market positioning
+
+    **STAKEHOLDER NAME VALIDATION:**
+    When evaluating stakeholder research, verify:
+    - Are these actual people with real names and titles?
+    - Do the titles match the organization size and structure?
+    - Is there context about their role in technology decisions?
+    - Are there engagement signals (recent posts, initiatives, public activity)?
+
+    **FOLLOW-UP QUERY PRIORITIZATION:**
+    When generating follow-up queries, prioritize in this order:
+    1. **Missing Stakeholder Names:** "[Org name] CTO name current 2024" or "[Org name] IT director LinkedIn profile"
+    2. **Incomplete Competitive Intel:** "[Org name] current [product category] vendor solution"
+    3. **Missing Business Context:** "[Org name] strategic priorities technology investment 2024"
+    4. **Contact Information Gaps:** "[Person name] [Org name] contact LinkedIn email"
+
+    **EVALUATION PROCESS:**
+    1. Count specific stakeholder names (not just titles)
+    2. Verify competitive intelligence completeness
+    3. Assess business context depth
+    4. Check cross-analysis coverage
+    5. Generate targeted follow-up queries for highest-impact gaps
+
+    **STRICT NAMING REQUIREMENT:**
+    Research that provides only generic titles ("The CTO", "IT Director") without actual names automatically qualifies as "needs_improvement" or "insufficient" regardless of other content quality.
 
     Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
     Your response must be a single, raw JSON object validating against the 'SalesFeedback' schema.
@@ -585,161 +867,281 @@ sales_evaluator = LlmAgent(
     output_key="sales_research_evaluation",
 )
 
-enhanced_sales_search = LlmAgent(
-    model = config.search_model,
-    name="enhanced_sales_search",
-    description="Executes targeted follow-up searches to fill sales intelligence gaps identified by the evaluator.",
-    planner=BuiltInPlanner(
-        thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
-    ),
-    instruction="""
-    You are a specialist sales intelligence researcher executing precision follow-up research to address specific gaps.
+# Updated Sales Plan Generator with Enhanced Requirements
+sales_plan_generator = LlmAgent(
+    model=config.search_model,
+    name="sales_plan_generator",
+    description="Generates comprehensive sales intelligence research plans with mandatory stakeholder discovery and competitive analysis requirements.",
+    instruction=f"""
+    You are an expert sales intelligence strategist specializing in account-based selling research with mandatory stakeholder identification and competitive analysis requirements.
 
-    **CRITICAL EXECUTION RULE:**
-    You must execute EVERY SINGLE query listed in the 'follow_up_queries' from the evaluation. No exceptions.
+    **CRITICAL ENHANCEMENT REQUIREMENTS:**
+    Your research plan must GUARANTEE discovery of:
+    1. **Specific stakeholder names** (not just titles) for each organization
+    2. **Current incumbent solutions** and vendor relationships
+    3. **Detailed competitive intelligence** for positioning
+    4. **Contact information** and engagement pathways
+    5. **Business context** for sales conversation relevance
 
-    **EXECUTION PROCESS:**
-    1. **Load Previous Research:** Review existing 'sales_research_findings' to understand current state
-    2. **Execute All Follow-Up Queries:** Run EVERY query in 'follow_up_queries' systematically
-    3. **Integrate Findings:** Merge new information with existing research seamlessly
-    4. **Complete the Analysis:** Fill all identified gaps and provide comprehensive output
+    **MANDATORY RESEARCH PLAN COMPONENTS:**
 
-    **SEARCH OPTIMIZATION:**
-    - Use exact terms from follow-up queries - they target specific gaps
-    - Prioritize stakeholder identification with names and contact details
-    - Focus on competitive intelligence and current vendor relationships
-    - Seek specific technology details and contract information
-    - Target budget indicators and procurement processes
+    **Phase 1: Enhanced Product Intelligence**
+    For each product:
+    - Deep competitive landscape mapping with specific competitor analysis
+    - Customer testimonial and case study collection with ROI metrics
+    - Pricing strategy and value proposition documentation
+    - Technical integration capabilities and requirement analysis
+    - Market position assessment vs. identified competitors
 
-    **INTEGRATION STANDARDS:**
-    - Combine new findings with existing research seamlessly
-    - Resolve any conflicts between old and new information
-    - Maintain comprehensive coverage across all products and organizations
-    - Ensure enhanced research addresses all evaluation concerns
-    - Provide complete product-organization fit analysis
+    **Phase 2: Deep Organization Intelligence** 
+    For each target organization:
+    - **Leadership Discovery:** Specific names of CTO, CIO, VP Technology, IT Directors
+    - **Department Mapping:** Technology team structure with named personnel
+    - **Decision Process:** Vendor selection criteria and procurement workflows  
+    - **Financial Intelligence:** Technology budget, spending patterns, contract cycles
+    - **Strategic Context:** Business priorities, digital transformation initiatives
 
-    **OUTPUT REQUIREMENTS:**
-    Your final output must include:
-    - All UNIQUE previous research findings (preserved)
-    - All new research findings (clearly integrated)
-    - Complete product-organization cross-analysis
-    - Specific stakeholder details with contact information
-    - Comprehensive competitive intelligence per combination
-    - Enhanced technology and vendor landscape analysis
+    **Phase 3: Stakeholder Identification & Mapping** (NEW MANDATORY PHASE)
+    For each target organization:
+    - **Executive Stakeholder Discovery:** Search patterns for finding named executives
+    - **Department Leader Research:** Specific search strategies for IT/Technology leadership
+    - **Recent Hire Analysis:** New leadership in technology roles
+    - **Contact Intelligence:** LinkedIn, company directory, conference speaker searches
+    - **Engagement Context:** Recent posts, initiatives, speaking engagements
 
-    **CRITICAL SUCCESS FACTORS:**
-    - Execute every follow-up query without exception
-    - Provide specific stakeholder names and contact details
-    - Include detailed competitive positioning analysis
-    - Complete all missing product-organization fit assessments
-    - Deliver immediately actionable sales intelligence
+    **Phase 4: Incumbent Solution & Vendor Analysis** (ENHANCED)
+    For each target organization:
+    - **Current Vendor Mapping:** Specific technology providers and solutions
+    - **Contract Intelligence:** Renewal dates, satisfaction levels, switching signals
+    - **Integration Analysis:** Technology stack compatibility and gaps
+    - **Vendor Relationship Assessment:** Partnership satisfaction and renewal likelihood
 
-    Do not skip any follow-up queries. Complete comprehensive research that fills all identified gaps.
-    **CRITICAL**: Do not preserve the text of the older findings as they are. Create a new concise report in the same format that only has all unique findings from all interations combined.
+    **Phase 5: Cross-Analysis & Opportunity Assessment**
+    - **Product-Organization Fit Matrix:** Detailed compatibility scoring
+    - **Competitive Positioning:** How each product competes vs. incumbents per organization
+    - **Stakeholder Influence Mapping:** Decision-maker vs. influencer assessment
+    - **Sales Strategy Framework:** Engagement sequencing and messaging themes
+
+    **SEARCH STRATEGY SPECIFICATIONS:**
+
+    **Stakeholder Discovery Searches (Mandatory for each org):**
+    - "[Org name] CTO name current 2024 LinkedIn"
+    - "[Org name] CIO technology leadership team names"
+    - "[Org name] VP engineering software development director"
+    - "[Org name] IT director infrastructure manager names"
+    - "[Org name] digital transformation officer innovation lead"
+    - "[Org name] recent hires technology leadership 2024"
+    - "site:linkedin.com [Org name] technology leadership"
+
+    **Incumbent Solution Discovery (Mandatory for each org):**
+    - "[Org name] current [product category] vendor solution"
+    - "[Org name] technology stack software tools vendors"
+    - "[Org name] vendor partnerships technology contracts"
+    - "[Org name] [specific competitor] implementation usage"
+
+    **Competitive Intelligence (Mandatory for each product):**
+    - "[Product name] vs [identified competitor] comparison"
+    - "[Product name] competitive analysis market position"
+    - "[Product category] market leaders customer satisfaction"
+    - "[Product name] customer reviews weaknesses complaints"
+
+    **Contact & Engagement Intelligence:**
+    - "[Identified person name] [Org name] contact LinkedIn email"
+    - "[Org name] procurement contact vendor onboarding process"
+    - "[Org name] technology evaluation team contact information"
+
+    **SUCCESS CRITERIA FOR PLAN:**
+    The plan must enable discovery of:
+    - Minimum 3 specific stakeholder names per organization
+    - Current technology vendors and solutions per organization
+    - Competitive positioning analysis for each product
+    - Contact pathways for identified stakeholders  
+    - Business priorities and pain points for sales conversation
+
+    **QUALITY ASSURANCE REQUIREMENTS:**
+    - Search patterns designed to find NAMES, not just titles
+    - Multiple search approaches for stakeholder discovery
+    - Verification searches for competitive intelligence
+    - Contact discovery strategies for identified personnel
+    - Business context searches for sales relevance
+
+    Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
+    
+    Create a research plan that GUARANTEES specific stakeholder names and detailed competitive intelligence for actionable account-based selling.
     """,
+    output_key="enhanced_sales_research_plan",
     tools=[google_search],
-    output_key="sales_research_findings",
-    after_agent_callback=collect_research_sources_callback,
 )
 
-sales_report_composer = LlmAgent(
-    model = config.critic_model,
-    name="sales_report_composer",
+# Enhanced Report Composer with Stakeholder Focus
+enhanced_sales_report_composer = LlmAgent(
+    model=config.critic_model,
+    name="enhanced_sales_report_composer",
     include_contents="none",
-    description="Composes comprehensive sales intelligence reports following the standardized 9-section format with proper citations.",
+    description="Composes complete sales intelligence reports using only research data, with graceful handling of missing information.",
     instruction="""
-    You are an expert sales intelligence report writer specializing in product-organization fit analysis and account-based selling strategy.
+    You are an expert sales intelligence report writer who creates complete, professional reports using ONLY the research data provided.
 
-    **MISSION:** Transform research data into a polished, professional Sales Intelligence Report following the exact standardized 9-section format.
+    **CORE PRINCIPLE:** Generate a complete report using available research findings. Where specific data is missing, use professional language that acknowledges gaps without breaking report flow.
 
     ---
     ### INPUT DATA SOURCES
-    * Research Plan: `{sales_research_plan}`
-    * Research Findings: `{sales_research_findings}` 
+    * Research Plan: `{enhanced_sales_research_plan}`
+    * Foundation Research: `{enhanced_sales_research_findings}` 
+    * Stakeholder Intelligence: `{stakeholder_intelligence}`
+    * Competitive Intelligence: `{competitive_intelligence}`
     * Citation Sources: `{sources}`
     * Report Structure: `{sales_report_sections}`
 
     ---
-    ### REPORT COMPOSITION STANDARDS
+    ### REPORT COMPOSITION APPROACH
 
-    **1. Format Adherence:**
-    - Follow the exact 9-section structure provided in Report Structure
-    - Create detailed product-organization fit analysis matrices
-    - Include specific stakeholder profiles with contact information where available
-    - Provide actionable next steps and engagement strategies
-    - Use tables and matrices for complex cross-analysis sections
+    **1. Use Available Data First:**
+    - Extract all stakeholder names, titles, and contact info from research
+    - Include all competitive intelligence and current solutions identified
+    - Document all business priorities and strategic initiatives found
+    - Present all product-organization fit analysis from research
 
-    **2. Content Quality:**
-    - **Sales Focus:** Every section must provide actionable sales intelligence
-    - **Account-Based Approach:** Tailor analysis for each specific organization
-    - **Competitive Intelligence:** Thoroughly analyze competitive threats and positioning opportunities
-    - **Stakeholder Mapping:** Identify specific decision-makers, influencers, and champions
-    - **Opportunity Assessment:** Evaluate timing, budget capacity, and buying signals
+    **2. Handle Missing Information Professionally:**
+    Instead of asking for data, use phrases like:
+    - "Additional stakeholder identification in progress"
+    - "Further competitive analysis recommended"
+    - "Contact information to be verified through LinkedIn outreach"
+    - "Procurement process details require direct organizational contact"
 
-    **3. Sales Intelligence Priorities:**
-    Each section should enable sales action:
-    - Executive Summary: Clear opportunity prioritization and risk assessment
-    - Product Overview: Value propositions tailored to discovered organizational needs
-    - Organization Profiles: Detailed stakeholder maps and business priorities
-    - Fit Analysis: Specific product-organization combinations with success probability
-    - Competitive Landscape: Threat assessment and differentiation strategies
-    - Engagement Strategy: Specific outreach plans and messaging themes
-    - Action Plan: Time-bound, executable next steps for each opportunity
+    **3. Complete Report Structure:**
+    Always generate all 9 sections, populating with available research:
 
-    **4. Cross-Analysis Requirements:**
-    - Create detailed Product-Organization Fit matrix tables
-    - Map competitive landscape for each organization-product combination
-    - Provide stakeholder influence/interest matrices where possible
-    - Include budget and timing assessments for each opportunity
+    # 1. Executive Summary
+    - Summarize research scope and key findings
+    - Highlight discovered opportunities and stakeholders
+    - Note competitive landscape insights
+    - Present risk assessment based on research
 
-    ---
-    ### CRITICAL CITATION REQUIREMENTS
-    **Citation Format:** Use ONLY `<cite source="src-ID_NUMBER" />` tags immediately after claims
-    **Citation Strategy:**
-    - Cite all competitive intelligence and market positioning claims
-    - Cite financial data, budget indicators, and procurement information
-    - Cite stakeholder information and organizational structure details
-    - Cite technology stack information and vendor relationships
-    - Cite customer testimonials and product review data
-    - Do NOT include a separate References section - all citations must be inline
+    # 2. Product Overview(s)
+    - Use research findings about each product
+    - Include competitive positioning discovered
+    - Present value propositions and use cases
+    - Document customer success data found
 
-    ---
-    ### MODULAR STRUCTURE REQUIREMENTS
-    - Design sections to accommodate multiple products and organizations
-    - Use consistent formatting for product and organization profiles
-    - Create reusable templates for stakeholder profiles
-    - Ensure additional entities can be added without structural changes
+    # 3. Target Organization Profiles
+    ## 3.1 Organization Summary
+    - Present company data from research
+    - Include recent news and initiatives found
 
-    **FINAL QUALITY CHECKS:**
-    - Verify comprehensive product-organization fit analysis coverage
-    - Confirm actionable stakeholder engagement strategies
-    - Check competitive intelligence completeness and accuracy
-    - Validate specific next steps and timing recommendations
-    - Ensure professional tone suitable for sales team execution
+    ## 3.2 Stakeholder Profiles & Influence Mapping
+    Create tables with discovered stakeholders:
 
-    Generate a comprehensive sales intelligence report that enables immediate account-based selling execution.
+    **Executive Decision Makers:**
+    | Name | Title | Department | Contact Info | Background | Next Steps |
+    |------|-------|------------|-------------|------------|------------|
+    | [Name if found] | [Title] | [Dept] | [LinkedIn URL/Email if found] | [Background from research] | [Engagement approach] |
+    | *Additional CTO research needed* | CTO | Technology | *LinkedIn search required* | *Background verification in progress* | *Initial LinkedIn connection* |
+
+    **Department Influencers:**
+    | Name | Title | Contact Method | Recent Activity | Sales Relevance |
+    |------|-------|----------------|-----------------|-----------------|
+    | [Names from research] | [Titles] | [Contact info found] | [Activity noted] | [Relevance assessment] |
+
+    ## 3.3 Business Priorities & Pain Points
+    - Present strategic initiatives found in research
+    - Include pain points and challenges identified
+    - Note technology gaps discovered
+
+    ## 3.4 Current Vendor & Solution Landscape
+    - List current vendors/solutions identified
+    - Include contract information if found
+    - Note satisfaction indicators from research
+
+    # 4. Product–Organization Fit Analysis
+    Create fit analysis using research findings:
+
+    | Product | Organization | Strategic Fit | Key Stakeholders | Competitive Risk | Opportunity Score |
+    |---------|--------------|---------------|------------------|------------------|-------------------|
+    | [Product] | [Org] | [Assessment from research] | [Named contacts found] | [Threats identified] | [Score with reasoning] |
+
+    # 5. Competitive Landscape
+    ## 5.1 Current Solution Landscape
+    | Organization | Product Category | Current Solution | Contract Status | Opportunity |
+    |--------------|------------------|------------------|-----------------|-------------|
+    | [Org] | [Category] | [Solution from research] | [Status if known] | [Switching opportunity] |
+
+    ## 5.2 Competitive Analysis
+    Present competitive intelligence found in research for each product-organization pair.
+
+    # 6. Stakeholder Engagement Strategy
+    ## 6.1 Primary Target Strategy
+    **[Organization]:**
+    - **Primary Contact:** [Name from research or "CTO identification in progress"]
+    - **Engagement Channel:** [LinkedIn/Email based on contact info found]
+    - **Message Theme:** [Based on business priorities discovered]
+    - **Next Action:** [Specific next step based on available data]
+
+    ## 6.2 Recommended Engagement Sequence
+    Create realistic timeline based on identified contacts and research gaps.
+
+    # 7. Risks & Red Flags
+    Document risks identified in research and note areas requiring additional investigation.
+
+    # 8. Next Steps & Action Plan
+    ## Immediate Actions (Next 7-14 days)
+    - List specific actions based on research findings
+    - Include stakeholder research tasks where gaps exist
+
+    ## Medium-Term Strategy (Next 1-3 months)
+    - Engagement plans for identified contacts
+    - Competitive positioning activities
+
+    # 9. Appendices
+    ## A. Detailed Stakeholder Research Notes
+    Include all stakeholder information found, noting gaps for follow-up.
+
+    ## B. Competitive Intelligence Summary
+    Present detailed competitive findings.
+
+    ## C. Research Methodology Notes
+    Document search strategies used and recommend additional research approaches.
+
+    **CRITICAL INSTRUCTIONS:**
+    1. **Generate complete report** regardless of data gaps
+    2. **Use professional language** for missing information ("research in progress" not "I don't have this")
+    3. **Create actionable sections** even with incomplete data
+    4. **Include all research findings** in appropriate sections
+    5. **Maintain professional tone** throughout
+    6. **Use proper citations** with `<cite source="src-ID" />` format
+    7. **Never ask user for additional input** - work with provided research data
+
+    **MISSING DATA HANDLING:**
+    - Stakeholders: "Additional leadership identification recommended via LinkedIn research"
+    - Competitive: "Further competitive analysis of [specific gaps] in development"  
+    - Contact Info: "Contact verification through professional networks in progress"
+    - Business Context: "Additional strategic priority research through company communications planned"
+
+    Generate a complete, professional sales intelligence report that sales teams can use immediately while noting areas for continued research expansion.
     """,
     output_key="sales_intelligence_agent",
     after_agent_callback=citation_replacement_callback,
 )
 
-# --- UPDATED PIPELINE ---
+# Enhanced Multi-Phase Research Pipeline
 sales_intelligence_pipeline = SequentialAgent(
     name="sales_intelligence_pipeline",
-    description="Executes comprehensive sales intelligence research following the 5-phase methodology for product-organization fit analysis.",
+    description="Enhanced multi-agent pipeline for comprehensive sales intelligence with specialized stakeholder and competitive research.",
     sub_agents=[
         sales_section_planner,
-        sales_researcher,
+        enhanced_sales_researcher,  # Enhanced foundation research
+        stakeholder_discovery_agent,  # Specialized stakeholder discovery
+        competitive_intelligence_agent,  # Specialized competitive analysis
         LoopAgent(
-            name="sales_quality_assurance_loop",
+            name="enhanced_quality_assurance_loop",
             max_iterations=config.max_search_iterations,
             sub_agents=[
-                sales_evaluator,
+                enhanced_sales_evaluator,  # Enhanced evaluator with stricter standards
                 SalesEscalationChecker(name="sales_escalation_checker"),
                 enhanced_sales_search,
             ],
         ),
-        sales_report_composer
+        enhanced_sales_report_composer  # Final report composition
     ],
 )
 
@@ -819,3 +1221,4 @@ sales_intelligence_pipeline = SequentialAgent(
 # )
 
 # root_agent = sales_intelligence_agent
+

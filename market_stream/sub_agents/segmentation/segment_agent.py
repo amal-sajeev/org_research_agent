@@ -1049,15 +1049,15 @@ segmentation_research_pipeline = SequentialAgent(
     sub_agents=[
         segmentation_section_planner,
         segmentation_researcher,
-        LoopAgent(
-            name="quality_assurance_loop",
-            max_iterations=config.max_search_iterations,
-            sub_agents=[
-                segmentation_evaluator,
-                EscalationChecker(name="escalation_checker"),
-                enhanced_segmentation_search,
-            ],
-        ),
+#       LoopAgent(
+#           name="quality_assurance_loop",
+#           max_iterations=config.max_search_iterations,
+#           sub_agents=[
+#               segmentation_evaluator,
+#               EscalationChecker(name="escalation_checker"),
+#               enhanced_segmentation_search,
+#            ],
+#        ),
         segmentation_report_composer
     ],
 )

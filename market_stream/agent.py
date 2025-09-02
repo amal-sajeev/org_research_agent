@@ -438,6 +438,8 @@ context_html_copmposer = LlmAgent(
 
 from .sub_agents.target_org_research.target_template import TARGET_TEMPLATE
 
+
+
 target_html_composer = LlmAgent(
     model=config.critic_model,
     name="html_report_generator",
@@ -447,6 +449,19 @@ target_html_composer = LlmAgent(
     after_agent_callback = [store_target_report]
 )
 
+whether_to_compose = LlmAgent(
+    model=config.critic_model,
+    name="html_report_generator",
+    description="Converts markdown sales intelligence reports into professional HTML format with responsive design and interactive elements.",
+    instruction="""Check the sales_agent_input: {sales_agent_input}
+        
+        If sales_agent_input contains "skip_sales": true, then output exactly:
+        {{"skipped": true, "reason": "No specific target organizations identified in user input"}}
+        
+        Otherwise, activate targer_html_composer to create the HTML report.""",
+    output_key="target_html",
+    tools = [AgentTool(target_html_composer)]
+)
 # ----------------------------------------------------------------------
 # Project Creator Agent
 # ----------------------------------------------------------------------
@@ -541,8 +556,7 @@ simplified_intelligence_agent = SequentialAgent(
         harbinger,
         context_html_copmposer,
         segmentation_html_composer,
-        target_html_composer
-    ]
+        whether_to_compose    ]
 )
 
 root_agent = simplified_intelligence_agent

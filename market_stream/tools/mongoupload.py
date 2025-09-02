@@ -66,11 +66,18 @@ def update_project_report(project_id: str, report: str, report_type: str, html_r
         {"project_id": project_id},
         {"$set": {report_type: report, f"{report_type}_html":html_report}}
     )
-    if html_report !="":
+
+    if html_report !=None or html_report == "":
         format = "agent_status"
     else:
         format = "sub_status"
-    requests.put(f"https://stu.globalknowledgetech.com:8444/project/project-status-update/{project_id}/",headers = {'Content-Type': 'application/json'}, data = json.dumps({format: f"{report_type} updated",}))
+
+    if report_type == "prospect_research":
+        message = "Completed"
+    else:
+        message = "updated"
+
+    requests.put(f"https://stu.globalknowledgetech.com:8444/project/project-status-update/{project_id}/",headers = {'Content-Type': 'application/json'}, data = json.dumps({format: f"{report_type} {message}",}))
 
     client.close()
 

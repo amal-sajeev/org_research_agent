@@ -797,15 +797,15 @@ market_research_pipeline = SequentialAgent(
     sub_agents=[
         market_section_planner,
         market_researcher,
-        LoopAgent(
-            name="quality_assurance_loop",
-            max_iterations=config.max_search_iterations,
-            sub_agents=[
-                market_evaluator,
-                EscalationChecker(name="escalation_checker"),
-                enhanced_market_search,
-            ],
-        ),
+       LoopAgent(
+           name="quality_assurance_loop",
+           max_iterations=config.max_search_iterations,
+           sub_agents=[
+               market_evaluator,
+               EscalationChecker(name="escalation_checker"),
+               enhanced_market_search,
+           ],
+       ),
         market_report_composer
     ],
 )

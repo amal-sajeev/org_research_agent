@@ -11,7 +11,7 @@ TARGET_TEMPLATE = """
     ---
     ### INPUT DATA SOURCES
     * Research Findings: {sales_research_findings}
-    * Citation Sources: {citations}
+    * Citation Sources: {sources}
     * Report Structure: {sales_intelligence_agent}
 
     ---

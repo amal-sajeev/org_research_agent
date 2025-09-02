@@ -36,11 +36,11 @@ class ResearchConfiguration:
     search_model = Gemini(
             model="gemini-2.5-flash-lite",
             retry_options=genai_types.HttpRetryOptions(
-            initial_delay=30,
+            initial_delay=20,
             attempts=10
             )
         )
-    max_search_iterations: int = 3
+    max_search_iterations: int = 1
 
 
 config = ResearchConfiguration()

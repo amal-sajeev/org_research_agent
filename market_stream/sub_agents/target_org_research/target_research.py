@@ -723,8 +723,6 @@ sales_report_composer = LlmAgent(
     after_agent_callback=citation_replacement_callback,
 )
 
-
-
 # --- UPDATED PIPELINE ---
 sales_intelligence_pipeline = SequentialAgent(
     name="sales_intelligence_pipeline",

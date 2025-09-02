@@ -15,10 +15,12 @@ def announce_markdown_upload(project_id: str, report_type: str):
         "prospect_research": "prospect_researcher"
         }
         requests.put(f"https://stu.globalknowledgetech.com:8444/project/project-status-update/{project_id}/",headers = {'Content-Type': 'application/json'}, data = json.dumps({"sub_status": f"{report_type} updated"}))
-
+        
+        
         print("###################################################################################")
         print("###################################################################################")
         print(f"{report_type} report stored successfully for project {project_id}")
+        print(f'@sub_status {report_type} updated for project {project_id}')
         print("###################################################################################")
         print("###################################################################################")
         
@@ -31,6 +33,7 @@ def announce_markdown_finish(callback_context:CallbackContext):
     try:
         project_id = project_id.replace('"','')
         requests.put(f"https://stu.globalknowledgetech.com:8444/project/project-status-update/{project_id}/",headers = {'Content-Type': 'application/json'}, data = json.dumps({"sub_status": f"Completed"}))
+        print('@{"sub_status": f"Completed"}')
     except Exception as e:
         print(f"Error announcing markdown completion: {e}")
 
@@ -50,6 +53,7 @@ def announce_html_upload(project_id: str, report_type: str):
         print("###################################################################################")
         print("###################################################################################")
         print(f"{report_type} report stored successfully for project {project_id}")
+        print(f'@agent_status {report_type} updated for project {project_id}')
         print("###################################################################################")
         print("###################################################################################")
         
@@ -61,6 +65,7 @@ def announce_html_finish(callback_context:CallbackContext):
     try:
         project_id = project_id.replace('"','')
         requests.put(f"https://stu.globalknowledgetech.com:8444/project/project-status-update/{project_id}/",headers = {'Content-Type': 'application/json'}, data = json.dumps({"agent_status": f"Completed"}))
+        print({"agent_status": f"Completed"})
     except Exception as e:
         print(f"Error announcing markdown completion: {e}")
 

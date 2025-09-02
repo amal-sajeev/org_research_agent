@@ -1,0 +1,547 @@
+2025-09-02 17:09:40 - INFO - === ADK Agent Starting ===
+2025-09-02 17:09:40 - INFO - Script location: C:\Users\User 3\Documents\Python scratchpad\agent\runner.py
+2025-09-02 17:09:40 - INFO - Working directory: C:\Users\User 3\Documents\Python scratchpad\agent
+2025-09-02 17:09:40 - INFO - Log file: C:\Users\User 3\Documents\Python scratchpad\agent\logs\adk_console_20250902.log
+2025-09-02 17:09:40 - INFO - Creating ADK FastAPI application...
+2025-09-02 17:09:40 - ERROR - C:\Users\User 3\Documents\Python scratchpad\agent\.venv\Lib\site-packages\google\adk\cli\fast_api.py:175: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+2025-09-02 17:09:40 - ERROR - C:\Users\User 3\Documents\Python scratchpad\agent\.venv\Lib\site-packages\google\adk\auth\credential_service\in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+2025-09-02 17:09:40 - INFO - ADK FastAPI application created successfully
+2025-09-02 17:09:40 - INFO - Starting uvicorn server...
+2025-09-02 17:09:40 - INFO - Server configuration:
+2025-09-02 17:09:40 - INFO -   Host: 0.0.0.0
+2025-09-02 17:09:40 - INFO -   Port: 8501
+2025-09-02 17:09:40 - INFO -   SSL Key: SSLCerts/key.pem
+2025-09-02 17:09:40 - INFO -   SSL Cert:SSLCerts/cert.pem
+2025-09-02 17:09:40 - ERROR - Error occurred: [Errno 2] No such file or directory
+2025-09-02 17:09:40 - ERROR - Full exception details:
+Traceback (most recent call last):
+  File "C:\Users\User 3\Documents\Python scratchpad\agent\runner.py", line 110, in <module>
+    uvicorn.run(
+    ~~~~~~~~~~~^
+        app,
+        ^^^^
+    ...<4 lines>...
+        access_log=True    # Enable access logging
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\User 3\Documents\Python scratchpad\agent\.venv\Lib\site-packages\uvicorn\main.py", line 580, in run
+    server.run()
+    ~~~~~~~~~~^^
+  File "C:\Users\User 3\Documents\Python scratchpad\agent\.venv\Lib\site-packages\uvicorn\server.py", line 67, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\asyncio\runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Python313\Lib\asyncio\base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\User 3\Documents\Python scratchpad\agent\.venv\Lib\site-packages\uvicorn\server.py", line 71, in serve
+    await self._serve(sockets)
+  File "C:\Users\User 3\Documents\Python scratchpad\agent\.venv\Lib\site-packages\uvicorn\server.py", line 78, in _serve
+    config.load()
+    ~~~~~~~~~~~^^
+  File "C:\Users\User 3\Documents\Python scratchpad\agent\.venv\Lib\site-packages\uvicorn\config.py", line 402, in load
+    self.ssl: ssl.SSLContext | None = create_ssl_context(
+                                      ~~~~~~~~~~~~~~~~~~^
+        keyfile=self.ssl_keyfile,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        ciphers=self.ssl_ciphers,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\User 3\Documents\Python scratchpad\agent\.venv\Lib\site-packages\uvicorn\config.py", line 115, in create_ssl_context
+    ctx.load_cert_chain(certfile, keyfile, get_password)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory
+2025-09-02 17:09:40 - INFO - === ADK Agent Shutdown ===
+2025-09-02 17:09:40 - ERROR - Traceback (most recent call last):
+2025-09-02 17:09:40 - ERROR - File [35m"C:\Users\User 3\Documents\Python scratchpad\agent\runner.py"[0m, line [35m110[0m, in [35m<module>[0m
+    [31muvicorn.run[0m[1;31m([0m
+    [31m~~~~~~~~~~~[0m[1;31m^[0m
+        [1;31mapp,[0m
+        [1;31m^^^^[0m
+    ...<4 lines>...
+        [1;31maccess_log=True    # Enable access logging[0m
+        [1;31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    [1;31m)[0m
+    [1;31m^[0m
+2025-09-02 17:09:40 - ERROR - File [35m"C:\Users\User 3\Documents\Python scratchpad\agent\.venv\Lib\site-packages\uvicorn\main.py"[0m, line [35m580[0m, in [35mrun[0m
+    [31mserver.run[0m[1;31m()[0m
+    [31m~~~~~~~~~~[0m[1;31m^^[0m
+2025-09-02 17:09:40 - ERROR - File [35m"C:\Users\User 3\Documents\Python scratchpad\agent\.venv\Lib\site-packages\uvicorn\server.py"[0m, line [35m67[0m, in [35mrun[0m
+    return [31masyncio.run[0m[1;31m(self.serve(sockets=sockets))[0m
+           [31m~~~~~~~~~~~[0m[1;31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+2025-09-02 17:09:40 - ERROR - File [35m"C:\Python313\Lib\asyncio\runners.py"[0m, line [35m195[0m, in [35mrun[0m
+    return [31mrunner.run[0m[1;31m(main)[0m
+           [31m~~~~~~~~~~[0m[1;31m^^^^^^[0m
+2025-09-02 17:09:40 - ERROR - File [35m"C:\Python313\Lib\asyncio\runners.py"[0m, line [35m118[0m, in [35mrun[0m
+    return [31mself._loop.run_until_complete[0m[1;31m(task)[0m
+           [31m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m[1;31m^^^^^^[0m
+2025-09-02 17:09:40 - ERROR - File [35m"C:\Python313\Lib\asyncio\base_events.py"[0m, line [35m725[0m, in [35mrun_until_complete[0m
+    return [31mfuture.result[0m[1;31m()[0m
+           [31m~~~~~~~~~~~~~[0m[1;31m^^[0m
+2025-09-02 17:09:40 - ERROR - File [35m"C:\Users\User 3\Documents\Python scratchpad\agent\.venv\Lib\site-packages\uvicorn\server.py"[0m, line [35m71[0m, in [35mserve[0m
+    await self._serve(sockets)
+2025-09-02 17:09:40 - ERROR - File [35m"C:\Users\User 3\Documents\Python scratchpad\agent\.venv\Lib\site-packages\uvicorn\server.py"[0m, line [35m78[0m, in [35m_serve[0m
+    [31mconfig.load[0m[1;31m()[0m
+    [31m~~~~~~~~~~~[0m[1;31m^^[0m
+2025-09-02 17:09:40 - ERROR - File [35m"C:\Users\User 3\Documents\Python scratchpad\agent\.venv\Lib\site-packages\uvicorn\config.py"[0m, line [35m402[0m, in [35mload[0m
+    self.ssl: ssl.SSLContext | None = [31mcreate_ssl_context[0m[1;31m([0m
+                                      [31m~~~~~~~~~~~~~~~~~~[0m[1;31m^[0m
+        [1;31mkeyfile=self.ssl_keyfile,[0m
+        [1;31m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    ...<5 lines>...
+        [1;31mciphers=self.ssl_ciphers,[0m
+        [1;31m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    [1;31m)[0m
+    [1;31m^[0m
+2025-09-02 17:09:40 - ERROR - File [35m"C:\Users\User 3\Documents\Python scratchpad\agent\.venv\Lib\site-packages\uvicorn\config.py"[0m, line [35m115[0m, in [35mcreate_ssl_context[0m
+    [31mctx.load_cert_chain[0m[1;31m(certfile, keyfile, get_password)[0m
+    [31m~~~~~~~~~~~~~~~~~~~[0m[1;31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+2025-09-02 17:09:40 - ERROR - [1;35mFileNotFoundError[0m: [35m[Errno 2] No such file or directory[0m
+2025-09-02 17:10:16 - INFO - === ADK Agent Starting ===
+2025-09-02 17:10:16 - INFO - Script location: C:\Users\User 3\Documents\Python scratchpad\agent\runner.py
+2025-09-02 17:10:16 - INFO - Working directory: C:\Users\User 3\Documents\Python scratchpad\agent
+2025-09-02 17:10:16 - INFO - Log file: C:\Users\User 3\Documents\Python scratchpad\agent\logs\adk_console_20250902.log
+2025-09-02 17:10:16 - INFO - Creating ADK FastAPI application...
+2025-09-02 17:10:16 - ERROR - C:\Users\User 3\Documents\Python scratchpad\agent\.venv\Lib\site-packages\google\adk\cli\fast_api.py:175: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+2025-09-02 17:10:16 - ERROR - C:\Users\User 3\Documents\Python scratchpad\agent\.venv\Lib\site-packages\google\adk\auth\credential_service\in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+2025-09-02 17:10:16 - INFO - ADK FastAPI application created successfully
+2025-09-02 17:10:16 - INFO - Starting uvicorn server...
+2025-09-02 17:10:16 - INFO - Server configuration:
+2025-09-02 17:10:16 - INFO -   Host: 0.0.0.0
+2025-09-02 17:10:16 - INFO -   Port: 8501
+2025-09-02 17:10:16 - INFO -   SSL Key: SSLCerts/key.pem
+2025-09-02 17:10:16 - INFO -   SSL Cert: SSLCerts/cert.pem
+2025-09-02 17:10:53 - INFO - New session created
+2025-09-02 17:11:01 - ERROR - Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+2025-09-02 17:11:01 - ERROR - Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+2025-09-02 17:11:01 - ERROR - Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+2025-09-02 17:11:01 - ERROR - Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+2025-09-02 17:11:01 - INFO - Loaded .env file for market_stream at C:\Users\User 3\Documents\Python scratchpad\agent\market_stream\.env
+2025-09-02 17:11:01 - INFO - Loaded .env file for market_stream at C:\Users\User 3\Documents\Python scratchpad\agent\market_stream\.env
+2025-09-02 17:11:02 - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+2025-09-02 17:11:04 - WARNING - Invalid config for agent apollo_parameter_optimizer: output_schema cannot co-exist with agent transfer configurations. Setting disallow_transfer_to_parent=True, disallow_transfer_to_peers=True
+2025-09-02 17:11:04 - INFO - Found root_agent in market_stream.agent
+2025-09-02 17:11:04 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:11:12 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:11:12 - INFO - Error extracting project_id: 'CallbackContext' object has no attribute 'input_data'
+2025-09-02 17:11:12 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:11:16 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:11:17 - INFO - Document with project_id 'TESTTESTTESTTESTTEST' already exists.
+2025-09-02 17:11:17 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:11:18 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:11:18 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:11:27 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:11:27 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:11:34 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:11:34 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:11:55 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:11:55 - INFO - Sending out request, model: gemini-2.5-flash-lite, backend: GoogleLLMVariant.GEMINI_API, stream: False
+2025-09-02 17:11:55 - INFO - AFC is enabled with max remote calls: 10.
+2025-09-02 17:12:12 - INFO - Response received from the model.
+2025-09-02 17:12:12 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:12:15 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:12:15 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:13:26 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:13:26 - INFO - Sending out request, model: gemini-2.5-flash-lite, backend: GoogleLLMVariant.GEMINI_API, stream: False
+2025-09-02 17:13:26 - INFO - AFC is enabled with max remote calls: 10.
+2025-09-02 17:14:02 - INFO - Response received from the model.
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Processing 14 events
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Found 44 grounding chunks
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 1: financialexpress.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 2: marketresearchfuture.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 3: grandviewresearch.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 4: thepienews.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 5: business-standard.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 6: wrightresearch.in
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 7: tracxn.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 8: siliconindia.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 9: ibef.org
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 10: imarcgroup.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 11: tracedataresearch.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 12: tracedataresearch.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 13: talentsapphire.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 14: mystrikingly.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 15: staffingindustry.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 16: nasscom.in
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 17: icai.org
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 18: w.media
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 19: thehindu.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 20: nasscom.in
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 21: grandviewresearch.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 22: imarcgroup.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 23: marketresearchfuture.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 24: shiftelearning.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 25: trainingindustry.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 26: mitrmedia.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 27: karmickinstitute.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 28: ey.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 29: studyinindia.gov.in
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 30: inflibnet.ac.in
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 31: teachers.institute
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 32: learnt.in
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 33: theigc.org
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 34: disprz.ai
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 35: cloudthat.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 36: sourceforge.net
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 37: shiimperial.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 38: indiatimes.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 39: medium.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 40: entrepreneur.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 41: cloudthat.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 42: henryharvin.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 43: medium.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Added new citation 44: shiksha.com
+2025-09-02 17:14:02 - INFO - [collect_research_sources_callback] Total citations collected: 44
+2025-09-02 17:14:02 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:14:56 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:14:56 - INFO - [escalation_checker] Research evaluation failed or not found. Loop will continue.
+2025-09-02 17:14:56 - INFO - Sending out request, model: gemini-2.5-flash-lite, backend: GoogleLLMVariant.GEMINI_API, stream: False
+2025-09-02 17:14:56 - INFO - AFC is enabled with max remote calls: 10.
+2025-09-02 17:15:09 - INFO - Response received from the model.
+2025-09-02 17:15:09 - INFO - [collect_research_sources_callback] Processing 17 events
+2025-09-02 17:15:09 - INFO - [collect_research_sources_callback] Found 44 grounding chunks
+2025-09-02 17:15:09 - INFO - [collect_research_sources_callback] Total citations collected: 44
+2025-09-02 17:15:09 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:17:51 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Processing report with 44 available citations
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Initial report length: 32781 characters
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Found 172 citation tags: ['src-1', 'src-9', 'src-1', 'src-21', 'src-22', 'src-34', 'src-42', 'src-25', 'src-34', 'src-21', 'src-22', 'src-9', 'src-34', 'src-25', 'src-42', 'src-43', 'src-16', 'src-9', 'src-21', 'src-22', 'src-21', 'src-22', 'src-9', 'src-29', 'src-9', 'src-1', 'src-16', 'src-34', 'src-1', 'src-9', 'src-25', 'src-22', 'src-21', 'src-34', 'src-39', 'src-42', 'src-21', 'src-22', 'src-21', 'src-22', 'src-3', 'src-9', 'src-21', 'src-34', 'src-21', 'src-22', 'src-3', 'src-10', 'src-21', 'src-22', 'src-16', 'src-25', 'src-1', 'src-9', 'src-42', 'src-25', 'src-34', 'src-25', 'src-25', 'src-1', 'src-22', 'src-42', 'src-25', 'src-24', 'src-1', 'src-40', 'src-16', 'src-21', 'src-16', 'src-9', 'src-21', 'src-34', 'src-42', 'src-7', 'src-21', 'src-42', 'src-34', 'src-43', 'src-42', 'src-25', 'src-9', 'src-16', 'src-24', 'src-35', 'src-21', 'src-22', 'src-29', 'src-21', 'src-24', 'src-24', 'src-43', 'src-42', 'src-25', 'src-29', 'src-21', 'src-24', 'src-42', 'src-25', 'src-25', 'src-25', 'src-34', 'src-9', 'src-24', 'src-24', 'src-25', 'src-34', 'src-25', 'src-25', 'src-25', 'src-42', 'src-25', 'src-43', 'src-42', 'src-43', 'src-42', 'src-43', 'src-34', 'src-25', 'src-25', 'src-42', 'src-16', 'src-9', 'src-29', 'src-25', 'src-24', 'src-16', 'src-25', 'src-9', 'src-16', 'src-25', 'src-42', 'src-43', 'src-24', 'src-1', 'src-21', 'src-22', 'src-3', 'src-34', 'src-25', 'src-21', 'src-25', 'src-21', 'src-22', 'src-3', 'src-10', 'src-9', 'src-7', 'src-21', 'src-34', 'src-7', 'src-21', 'src-21', 'src-22', 'src-25', 'src-16', 'src-25', 'src-34', 'src-25', 'src-25', 'src-25', 'src-42', 'src-1', 'src-9', 'src-21', 'src-3', 'src-10', 'src-16', 'src-29', 'src-7', 'src-34', 'src-40', 'src-1']
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 1
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 9
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 1
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 22
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 34
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 42
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 34
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 22
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 9
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 34
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 42
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 43
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 16
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 9
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 22
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 22
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 9
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 29
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 9
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 1
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 16
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 34
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 1
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 9
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 22
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 34
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 39
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 42
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 22
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 22
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 3
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 9
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 34
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 22
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 3
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 10
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 22
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 16
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 1
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 9
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 42
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 34
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 1
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 22
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 42
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 24
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 1
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 40
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 16
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 16
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 9
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 34
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 42
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 7
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 42
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 34
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 43
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 42
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 9
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 16
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 24
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 35
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 22
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 29
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 24
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 24
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 43
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 42
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 29
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 24
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 42
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 34
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 9
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 24
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 24
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 34
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 42
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 43
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 42
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 43
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 42
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 43
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 34
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 42
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 16
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 9
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 29
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 24
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 16
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 9
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 16
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 42
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 43
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 24
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 1
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 22
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 3
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 34
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 22
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 3
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 10
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 9
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 7
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 34
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 7
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 22
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 16
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 34
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 25
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 42
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 1
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 9
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 21
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 3
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 10
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 16
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 29
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 7
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 34
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 40
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Converting citation 1
+2025-09-02 17:17:51 - INFO - [wikipedia_citation_callback] Adding 17 references
+2025-09-02 17:17:52 - INFO - ###################################################################################
+2025-09-02 17:17:52 - INFO - ###################################################################################
+2025-09-02 17:17:52 - INFO - market_context report stored successfully for project TESTTESTTESTTESTTEST
+2025-09-02 17:17:52 - INFO - @sub_status market_context updated for project TESTTESTTESTTESTTEST
+2025-09-02 17:17:52 - INFO - ###################################################################################
+2025-09-02 17:17:52 - INFO - ###################################################################################
+2025-09-02 17:17:52 - INFO - Market context report stored successfully for project TESTTESTTESTTESTTEST
+2025-09-02 17:17:52 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:18:12 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:18:12 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:18:53 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:18:53 - INFO - Sending out request, model: gemini-2.5-flash-lite, backend: GoogleLLMVariant.GEMINI_API, stream: False
+2025-09-02 17:18:53 - INFO - AFC is enabled with max remote calls: 10.
+2025-09-02 17:20:00 - INFO - Response received from the model.
+2025-09-02 17:20:00 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:20:03 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:20:03 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:21:28 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:21:28 - INFO - Sending out request, model: gemini-2.5-flash-lite, backend: GoogleLLMVariant.GEMINI_API, stream: False
+2025-09-02 17:21:28 - INFO - AFC is enabled with max remote calls: 10.
+2025-09-02 17:22:56 - INFO - Response received from the model.
+2025-09-02 17:22:56 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:25:05 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:25:06 - INFO - ###################################################################################
+2025-09-02 17:25:06 - INFO - ###################################################################################
+2025-09-02 17:25:06 - INFO - market_segment report stored successfully for project TESTTESTTESTTESTTEST
+2025-09-02 17:25:06 - INFO - @sub_status market_segment updated for project TESTTESTTESTTESTTEST
+2025-09-02 17:25:06 - INFO - ###################################################################################
+2025-09-02 17:25:06 - INFO - ###################################################################################
+2025-09-02 17:25:06 - INFO - Segmentation report stored successfully for project TESTTESTTESTTESTTEST
+2025-09-02 17:25:06 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:25:19 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:25:19 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:25:27 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:25:27 - INFO - Error storing organizational intelligence report: name 'org_report' is not defined
+2025-09-02 17:25:27 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:25:55 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:25:55 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:26:02 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:26:02 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:26:29 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:26:29 - INFO - Sending out request, model: gemini-2.5-flash-lite, backend: GoogleLLMVariant.GEMINI_API, stream: False
+2025-09-02 17:26:29 - INFO - AFC is enabled with max remote calls: 10.
+2025-09-02 17:26:43 - INFO - Response received from the model.
+2025-09-02 17:26:43 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:27:20 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:27:20 - INFO - [persona_escalation_checker] Extracted grade: fail
+2025-09-02 17:27:20 - INFO - [persona_escalation_checker] Persona evaluation FAILED (grade: fail). Continuing loop for enhancement.
+2025-09-02 17:27:20 - ERROR - [persona_escalation_checker] Error in escalation check: 1 validation error for Event
+content
+  Input should be a valid dictionary or object to extract fields from [type=model_attributes_type, input_value='Persona validation faile...g to enhancement phase.', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/model_attributes_type
+2025-09-02 17:27:20 - INFO - Sending out request, model: gemini-2.5-flash-lite, backend: GoogleLLMVariant.GEMINI_API, stream: False
+2025-09-02 17:27:20 - INFO - AFC is enabled with max remote calls: 10.
+2025-09-02 17:29:07 - INFO - Response received from the model.
+2025-09-02 17:29:07 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:29:42 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:29:42 - INFO - [persona_escalation_checker] Extracted grade: pass
+2025-09-02 17:29:42 - INFO - [persona_escalation_checker] Persona evaluation PASSED. Escalating to stop loop.
+2025-09-02 17:29:42 - ERROR - [persona_escalation_checker] Error in escalation check: 1 validation error for Event
+content
+  Input should be a valid dictionary or object to extract fields from [type=model_attributes_type, input_value='Persona validation passe...parameter optimization.', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/model_attributes_type
+2025-09-02 17:29:42 - INFO - Sending out request, model: gemini-2.5-flash-lite, backend: GoogleLLMVariant.GEMINI_API, stream: False
+2025-09-02 17:29:42 - INFO - AFC is enabled with max remote calls: 10.
+2025-09-02 17:30:31 - INFO - Response received from the model.
+2025-09-02 17:30:31 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:30:58 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:30:58 - INFO - ###################################################################################
+2025-09-02 17:30:58 - INFO - ###################################################################################
+2025-09-02 17:30:58 - INFO - prospect_research report stored successfully for project TESTTESTTESTTESTTEST
+2025-09-02 17:30:58 - INFO - @sub_status prospect_research updated for project TESTTESTTESTTESTTEST
+2025-09-02 17:30:58 - INFO - ###################################################################################
+2025-09-02 17:30:58 - INFO - ###################################################################################
+2025-09-02 17:30:58 - INFO - ###################################################################################
+2025-09-02 17:30:58 - INFO - ###################################################################################
+2025-09-02 17:30:58 - INFO - Prospect research report stored successfully for project TESTTESTTESTTESTTEST
+2025-09-02 17:30:58 - INFO - ###################################################################################
+2025-09-02 17:30:58 - INFO - ###################################################################################
+2025-09-02 17:30:58 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:31:07 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:31:07 - INFO - @{"sub_status": f"Completed"}
+2025-09-02 17:31:07 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai
+2025-09-02 17:32:26 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 17:32:27 - INFO - ###################################################################################
+2025-09-02 17:32:27 - INFO - ###################################################################################
+2025-09-02 17:32:27 - INFO - market_context report stored successfully for project TESTTESTTESTTESTTEST
+2025-09-02 17:32:27 - INFO - @sub_status market_context updated for project TESTTESTTESTTESTTEST
+2025-09-02 17:32:27 - INFO - ###################################################################################
+2025-09-02 17:32:27 - INFO - ###################################################################################
+2025-09-02 17:32:27 - INFO - Market context report stored successfully for project TESTTESTTESTTESTTEST
+2025-09-02 17:32:27 - INFO - 
+LiteLLM completion() model= gpt-5-mini; provider = openai

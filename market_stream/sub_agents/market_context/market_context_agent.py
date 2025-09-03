@@ -803,11 +803,11 @@ market_research_pipeline = SequentialAgent(
            sub_agents=[
                market_evaluator,
                EscalationChecker(name="escalation_checker"),
-               enhanced_market_search,
+               enhanced_market_search,      
            ],
        ),
         market_report_composer
-    ],
+    ]
 )
 
 market_intelligence_agent = LlmAgent(

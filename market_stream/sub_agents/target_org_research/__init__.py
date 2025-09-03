@@ -1,1 +1,1 @@
-from .target_research import sales_intelligence_pipeline, sales_plan_generator
+from .target_research import organizational_research_pipeline, organizational_plan_generator

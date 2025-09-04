@@ -41,7 +41,7 @@ def store_target_report(callback_context: CallbackContext):
     try:
         project_id = callback_context.state.get('project_id')
         project_id = project_id.replace('"','')
-        target_report = callback_context.state.get('sales_intelligence_agent')
+        target_report = callback_context.state.get('organizational_intelligence_agent')
         target_html = callback_context.state.get("target_html")
         
         if project_id and target_report:
@@ -393,7 +393,7 @@ conditional_sales_intelligence_agent = LlmAgent(
 
         Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
 
-        **REMEMBER:** Always begin with strategic planning, then execute through the comprehensive research pipeline.
+        **REMEMBER:** Always begin with a plan using the organizational_plan_generator, then always EXECUTE that plan through the subagent organizational_research_pipeline.
     """,
     sub_agents=[organizational_research_pipeline],
     tools=[AgentTool(organizational_plan_generator)],

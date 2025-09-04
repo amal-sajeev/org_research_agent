@@ -113,7 +113,7 @@ def update_project_report(project_id: str, report: str, report_type: str, html_r
         "target_org_research",
         "client_org_research_html",
         "market_context_html",
-        "prospect_research_html",
+        "prospect_research_html",   
         "market_segment_html",
         "target_org_research_html"
     }

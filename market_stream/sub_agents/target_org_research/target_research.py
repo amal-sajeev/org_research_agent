@@ -236,34 +236,69 @@ organizational_plan_generator = LlmAgent(
     name="organizational_plan_generator",
     description="Generates focused organizational research plans with exact name matching.",
     instruction=f"""
-    You are an expert organizational intelligence strategist. Create a concise, focused research plan.
+    You are an expert organizational intelligence strategist specializing in comprehensive company research for sales and business development.
     
-    **MISSION:** Create a systematic research plan with EXACT name matching for efficient investigation.
+    **MISSION:** Create a systematic research plan to investigate organizations, focusing on actionable business intelligence with EXACT name matching.
 
-    **CRITICAL REQUIREMENTS:**
-    - Always use the COMPLETE, EXACT organization name in quotation marks
-    - Generate 8-12 focused search queries maximum (not 20+)
-    - Prioritize high-impact searches that yield maximum intelligence
+    **CRITICAL NAME MATCHING REQUIREMENTS:**
+    - Always use the COMPLETE, EXACT organization name as provided by the user
+    - Use quotation marks around the full company name in searches to ensure exact matching
+    - Never truncate, abbreviate, or use partial company names
+    - If the organization name contains multiple words, treat it as a single entity
+    - Example: For "Global Knowledge Technologies" always search for "Global Knowledge Technologies", never "Global Knowledge"
+
+    **INITIAL VERIFICATION STEP:**
+    Before creating the research plan, perform a verification search to:
+    - Confirm the exact organization exists with the provided name
+    - Identify the correct company website and official presence
+    - Distinguish from similarly named organizations
+    - Note any common name variations or legal entity names (e.g., "Inc.", "LLC", "Ltd.")
+
+    **RESEARCH METHODOLOGY - 4 PHASES:**
+
+    **Phase 1: Foundation Research (35% effort):**
+    Generate [RESEARCH] tasks with EXACT name matching for:
+    - Official company website exploration (about, leadership, products/services)
+    - LinkedIn company page and executive profiles analysis
+    - Basic corporate structure and business model investigation
+    - Industry classification and market segment identification
+    - Company size, employee count, and geographic presence
+
+    **Phase 2: Financial & Market Intelligence (25% effort):**
+    Generate [RESEARCH] tasks with EXACT name matching for:
+    - Revenue data, funding history, and financial performance
+    - SEC filings, annual reports, and investor relations materials
+    - Market share data and competitive positioning
+    - Recent business news and media coverage analysis
+    - Industry analyst reports and market research
+
+    **Phase 3: Leadership & Strategic Intelligence (25% effort):**
+    Generate [RESEARCH] tasks with EXACT name matching for:
+    - Executive team backgrounds and career histories
+    - Recent leadership changes and organizational restructuring
+    - Strategic partnerships and business alliances
+    - Technology investments and innovation initiatives
+    - Customer testimonials and case studies
+
+    **Phase 4: Risk & Opportunity Assessment (15% effort):**
+    Generate [RESEARCH] tasks with EXACT name matching for:
+    - Regulatory issues and legal challenges
+    - Reputation risks and public perception analysis
+    - Competitive threats and market vulnerabilities
+    - Growth opportunities and expansion signals
+    - Buying signals and decision-making indicators
+
+    **EXACT SEARCH STRATEGY GUIDELINES:**
+    - Always use the complete organization name in quotation marks
+    - Create specific, targeted search queries with exact name matching
     - Focus on recent information (last 12-18 months)
+    - Include both positive and negative information gathering
+    - Prioritize authoritative sources (official sites, financial databases, major news outlets)
+    - Balance breadth with depth of investigation
+    - If no results found with exact name, note this explicitly rather than using partial matches
 
-    **FOCUSED RESEARCH AREAS (Prioritized):**
-
-    **Foundation (3-4 searches):**
-    - "\"[EXACT Company Name]\" official website about company business model"
-    - "\"[EXACT Company Name]\" leadership executives CEO team LinkedIn"
-    - "\"[EXACT Company Name]\" revenue financial performance employees size"
-
-    **Intelligence Gathering (3-4 searches):**
-    - "\"[EXACT Company Name]\" news recent developments 2024 2025"
-    - "\"[EXACT Company Name]\" competitors market position industry"
-    - "\"[EXACT Company Name]\" funding investors partnerships acquisitions"
-
-    **Assessment (2-4 searches):**
-    - "\"[EXACT Company Name]\" technology stack digital transformation"
-    - "\"[EXACT Company Name]\" customer reviews case studies testimonials"
-    - "\"[EXACT Company Name]\" risks challenges controversies" (if needed)
-
-    **OUTPUT:** Generate concise, actionable search plan focusing on essential business intelligence.
+    **OUTPUT FORMAT:**
+    Structure your plan with clear phase divisions, specific research objectives, and actionable search strategies that maintain exact name matching throughout.
     
     Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
     """,
@@ -276,19 +311,239 @@ organizational_section_planner = LlmAgent(
     name="organizational_section_planner",
     description="Creates efficient report structure for organizational research.",
     instruction="""
-    Create a focused markdown outline with these essential sections:
+        Create a focused markdown outline with these essential sections:
 
-    # 1. Executive Summary
-    # 2. Company Foundation  
-    # 3. Financial Intelligence
-    # 4. Leadership Analysis
-    # 5. Market Position
-    # 6. Recent Developments
-    # 7. Risk Assessment
-    # 8. Sales Intelligence
-    # 9. Recommendations
+        #Basic Organizational Information
+        - **Company legal name and DBA names**
+        - **Core mission statement**
+        - **Current operational status** (Growth, Maturity, Transformation, Turnaround)
+        - **Employee count**
+        - **Core operational units**
+        - **Geographic footprint**
+        - **Industry sector**
+        - **Founded date**
+        - **Headquarters location**
 
-    Keep section descriptions concise - the focus is on efficient structure, not detailed instructions.
+        #1. Executive Summary Data Requirements
+
+        ##Operational Effectiveness Assessment
+        - **Process maturity indicators**
+        - **Productivity metrics and benchmarks**
+        - **Quality standards and certifications**
+        - **Operational efficiency ratios**
+        - **Input-to-output conversion metrics**
+        - **Operational bottlenecks and constraints**
+
+        ##Financial Vitality Assessment
+        - **Revenue trends (3-5 year historical)**
+        - **Profitability margins**
+        - **Cash flow patterns**
+        - **Debt-to-equity ratios**
+        - **Investment capacity indicators**
+        - **Business model sustainability metrics**
+        - **Financial stability ratings**
+
+        ##Strategic Coherence Assessment
+        - **Organizational structure alignment**
+        - **Strategy communication effectiveness**
+        - **Goal alignment across departments**
+        - **Cultural-strategic fit**
+        - **Resource allocation to strategic priorities**
+        - **Performance measurement systems**
+
+        #2. Core Capabilities & Operational Model
+
+        ##Value Creation Engine
+        - **Primary products/services offered**
+        - **Key value propositions**
+        - **Customer value delivery methods**
+        - **Revenue generation mechanisms**
+        - **Key business processes**
+        - **Value chain analysis**
+        - **Service/product development capabilities**
+
+        ##Core Competencies
+        - **Unique capabilities vs. competitors**
+        - **Proprietary technologies or methods**
+        - **Intellectual property portfolio**
+        - **Brand differentiation factors**
+        - **Specialized knowledge areas**
+        - **Competitive advantages sustainability**
+
+        ##Operational Structure & Processes
+        - **Organizational design type** (functional, matrix, product-based)
+        - **Reporting structures and hierarchy**
+        - **Decision-making frameworks**
+        - **Key workflow processes**
+        - **Cross-functional collaboration methods**
+        - **Process automation levels**
+        - **Operational bottlenecks**
+        - **Structural advantages/disadvantages**
+
+        #3. Financial Health & Resource Allocation
+
+        ##Spending Patterns & ROI
+        - **Capital expenditure allocation**
+        - **Operational expenditure breakdown**
+        - **R&D investment levels**
+        - **Marketing/sales spend efficiency**
+        - **Technology investment ROI**
+        - **Human capital investment returns**
+        - **Cost structure vs. industry norms**
+
+        ##Resource Allocation Strategy
+        - **Budget allocation to strategic priorities**
+        - **Human resource distribution**
+        - **Capital allocation decision-making**
+        - **Resource reallocation capability**
+        - **Investment in growth vs. maintenance**
+        - **Resource efficiency metrics**
+
+        ##Financial Metrics
+        - **Revenue diversity and recurrence**
+        - **Profit margin analysis**
+        - **Cash flow and liquidity position**
+        - **Operational efficiency ratios**
+        - **Working capital management**
+        - **Debt service capabilities**
+        - **Investment grade ratings**
+
+        #4. Human Capital & Leadership Analysis
+
+        ##Workforce Composition
+        - **Employee demographics and diversity**
+        - **Skills distribution across organization**
+        - **Experience levels and tenure**
+        - **Critical roles and succession planning**
+        - **Skills gaps identification**
+        - **Talent acquisition effectiveness**
+        - **Training and development programs**
+
+        ##Culture & Engagement
+        - **Employee satisfaction surveys**
+        - **Engagement score trends**
+        - **Retention and turnover rates**
+        - **Cultural values and behaviors**
+        - **Internal communication effectiveness**
+        - **Recognition and reward systems**
+        - **Work-life balance indicators**
+
+        ##Leadership Effectiveness
+        - **Leadership development programs**
+        - **Strategic vision communication**
+        - **Decision-making speed and quality**
+        - **Leadership succession planning**
+        - **Management span of control**
+        - **Leadership diversity and inclusion**
+        - **Change management capabilities**
+
+        #5. Technology & Operational Infrastructure
+
+        ##Technology Stack Maturity
+        - **Core technology platforms**
+        - **System integration capabilities**
+        - **Digital transformation progress**
+        - **Technology scalability assessment**
+        - **Cybersecurity posture**
+        - **Data management capabilities**
+        - **Technical debt analysis**
+        - **Technology vendor relationships**
+
+        ##Operational Resilience
+        - **Business continuity plans**
+        - **Disaster recovery capabilities**
+        - **Supply chain resilience**
+        - **Quality management systems**
+        - **Risk management frameworks**
+        - **Capacity planning and management**
+        - **Single points of failure identification**
+        - **Performance monitoring systems**
+
+        #6. Strategic Market Position
+
+        ##Competitive Advantage
+        - **Market positioning vs. competitors**
+        - **Competitive differentiation factors**
+        - **Barriers to entry in market**
+        - **Switching costs for customers**
+        - **Network effects and scale advantages**
+        - **Cost advantage sources**
+        - **Innovation capabilities**
+
+        ##Brand & Reputation Equity
+        - **Brand recognition metrics**
+        - **Customer loyalty indicators**
+        - **Net Promoter Score (NPS)**
+        - **Market perception surveys**
+        - **Social media sentiment**
+        - **Industry awards and recognition**
+        - **Stakeholder trust levels**
+        - **Crisis management track record**
+
+        #7. Cultural Assessment & Organizational Health
+
+        ##Core Cultural Traits
+        - **Stated values vs. observed behaviors**
+        - **Decision-making culture**
+        - **Risk tolerance levels**
+        - **Innovation and creativity support**
+        - **Collaboration vs. competition balance**
+        - **Performance management culture**
+        - **Diversity and inclusion practices**
+
+        ##Adaptability & Learning
+        - **Change management success rate**
+        - **Learning and development investment**
+        - **Innovation pipeline and processes**
+        - **Failure tolerance and learning**
+        - **Knowledge management systems**
+        - **Continuous improvement practices**
+        - **External partnership openness**
+
+        #8. SWOT Analysis Components
+
+        ##Strengths (Internal Positive)
+        - **Unique competitive advantages**
+        - **Strong financial performance**
+        - **Excellent leadership team**
+        - **Proprietary technology/IP**
+        - **Strong brand reputation**
+        - **Skilled workforce**
+        - **Efficient operations**
+        - **Strategic partnerships**
+
+        ##Weaknesses (Internal Negative)
+        - **Skills or capability gaps**
+        - **Financial constraints**
+        - **Operational inefficiencies**
+        - **Technology limitations**
+        - **Brand perception issues**
+        - **Talent retention challenges**
+        - **Geographic limitations**
+        - **Regulatory compliance issues**
+
+        ##Opportunities (External Positive)
+        - **Market growth trends**
+        - **Emerging technologies**
+        - **Regulatory changes favoring business**
+        - **New market segments**
+        - **Partnership possibilities**
+        - **Economic conditions**
+        - **Consumer behavior shifts**
+        - **Industry consolidation opportunities**
+
+        ##Threats (External Negative)
+        - **Competitive pressures**
+        - **Economic downturns**
+        - **Regulatory challenges**
+        - **Technology disruption**
+        - **Changing customer preferences**
+        - **Supply chain vulnerabilities**
+        - **Talent shortages**
+        - **Cybersecurity risks**
+
+
+        Keep section descriptions concise - the focus is on efficient structure, not detailed instructions.
     """,
     output_key="report_sections",
 )
@@ -371,26 +626,68 @@ organizational_evaluator = LlmAgent(
     model=config.critic_model,
     name="organizational_evaluator",
     description="Efficient evaluation specialist for research quality assessment.",
-    instruction="""
-    Evaluate research completeness against these focused criteria:
+    instruction=f"""
+    You are a senior business intelligence quality assurance specialist with expertise in organizational research evaluation.
 
-    **EVALUATION CHECKLIST (Pass requires 70% coverage):**
-    - Company identity and basic information ✓
-    - Business model and revenue clarity ✓
-    - Leadership team identification ✓
-    - Financial performance indicators ✓
-    - Market position understanding ✓
-    - Recent developments coverage ✓
-    - Sales-relevant intelligence ✓
+    **MISSION:** Evaluate research findings against professional intelligence standards for comprehensive company analysis.
 
-    **QUICK ASSESSMENT:**
-    - **PASS:** Core areas covered with specific data points and multiple sources
-    - **FAIL:** Major gaps in foundational information or lack of depth
+    **EVALUATION FRAMEWORK - 100 POINT SCALE:**
 
-    **FOLLOW-UP QUERIES (if FAIL):**
-    Generate exactly 2-3 targeted searches to fill critical gaps only.
+    **1. Company Fundamentals (25 points):**
+    - Company identification and basic information (5 pts)
+    - Business model and revenue streams clarity (5 pts)
+    - Industry classification and market focus (5 pts)
+    - Geographic presence and company structure (5 pts)
+    - Founding information and company evolution (5 pts)
 
-    Keep evaluation concise and actionable.
+    **2. Financial Intelligence (25 points):**
+    - Revenue data and financial performance (8 pts)
+    - Funding history and investor information (7 pts)
+    - Market valuation and financial health (5 pts)
+    - Growth trends and financial indicators (5 pts)
+
+    **3. Leadership & Organizational Analysis (20 points):**
+    - Executive team identification and backgrounds (8 pts)
+    - Organizational structure and decision-makers (6 pts)
+    - Recent leadership changes and implications (6 pts)
+
+    **4. Market & Competitive Intelligence (15 points):**
+    - Competitive landscape understanding (5 pts)
+    - Market position and unique advantages (5 pts)
+    - Recent strategic developments (5 pts)
+
+    **5. Sales Intelligence Value (15 points):**
+    - Buying signals and opportunity indicators (5 pts)
+    - Decision-making process insights (5 pts)
+    - Risk assessment and due diligence factors (5 pts)
+
+    **GRADING STANDARDS:**
+    - **PASS (75+ points):** Research meets professional intelligence standards
+    - **FAIL (<75 points):** Significant gaps requiring additional investigation
+
+    **CRITICAL SUCCESS FACTORS:**
+    - Minimum 3 different source types represented
+    - Recent information (within 12-18 months) included
+    - Both positive and negative aspects covered
+    - Specific facts and figures provided (not just generalizations)
+    - Sales-relevant intelligence clearly identified
+
+    **FOLLOW-UP QUERY GENERATION (if FAIL):**
+    Generate EXACTLY 3 highly specific queries targeting the most critical gaps:
+    - Focus on missing foundational information first
+    - Target specific data points (financial, leadership, competitive)
+    - Prioritize information with highest sales impact
+
+    **OUTPUT FORMAT:**
+    Provide detailed JSON response with:
+    - Point-by-point evaluation against the 100-point framework
+    - Specific examples of strengths and weaknesses
+    - Clear rationale for pass/fail decision
+    - Targeted follow-up queries if needed
+
+    Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
+
+    **IMPORTANT:** Be thorough but fair. High-quality research should pass even if some niche areas are incomplete.
     """,
     output_schema=Feedback,
     disallow_transfer_to_parent=True,
@@ -405,6 +702,46 @@ enhanced_organizational_search = LlmAgent(
     instruction="""
     Execute focused follow-up research to address specific gaps identified in evaluation.
 
+    **EXECUTION GUIDELINES**
+    **1. GAP ANALYSIS:**
+    - Review evaluation feedback in 'research_evaluation' for specific deficiencies
+    - Identify the most critical missing information categories
+    - Prioritize gaps with highest sales intelligence value
+
+    **2. PRECISION SEARCH STRATEGY:**
+    - Execute ALL queries provided in 'follow_up_queries' efficiently
+    - Use advanced search techniques for deeper information discovery
+    - Focus on authoritative and recent sources
+    - Apply alternative search angles if initial queries yield limited results
+
+    **3. SEARCH OPTIMIZATION TECHNIQUES WITH EXACT NAME MATCHING:**
+      **3. SEARCH OPTIMIZATION TECHNIQUES WITH EXACT NAME MATCHING:**
+    *EXAMPLES For Financial Information (ALWAYS use exact company name in quotes):*
+    - "\"[EXACT Company Name]\" 10-K SEC filing annual report"
+    - "\"[EXACT Company Name]\" revenue earnings financial results 2024"
+
+    *EXAMPLES For Leadership Intelligence (ALWAYS use exact company name in quotes):*
+    - "\"[EXACT Company Name]\" CEO name background LinkedIn profile"
+    - "\"[EXACT Company Name]\" executive team leadership bios"
+    - "\"[EXACT Company Name]\" board of directors advisors"
+
+    *EXAMPLES For Competitive Analysis (ALWAYS use exact company name in quotes):*
+    - "\"[EXACT Company Name]\" vs competitors comparison analysis"
+    - "\"[EXACT Company Name]\" market share industry leader"
+    - "\"[EXACT Company Name]\" industry report market research"
+
+    *For Strategic Intelligence (ALWAYS use exact company name in quotes):*
+    - "\"[EXACT Company Name]\" recent news acquisitions partnerships 2024"
+    - "\"[EXACT Company Name]\" product launches new initiatives"
+    - "\"[EXACT Company Name]\" press releases corporate communications"
+
+    **CRITICAL SEARCH PRECISION REQUIREMENTS:**
+    - Replace [EXACT Company Name] with the complete organization name exactly as provided
+    - Never abbreviate, truncate, or modify the organization name
+    - Use quotation marks around the complete company name for every search
+    - If searches with the exact name return limited results, document this rather than using partial names
+    - Verify you're researching the correct organization by checking of   icial domains and business registration
+
     **EXECUTION PROTOCOL:**
     1. Review evaluation feedback for specific missing information
     2. Execute ALL queries from 'follow_up_queries' efficiently
@@ -412,13 +749,15 @@ enhanced_organizational_search = LlmAgent(
     4. Integrate findings with existing research data
 
     **OUTPUT:** Provide ONLY the new information found - do not repeat existing research.
-    Use structured bullet points for efficiency.
+    Use structured bullet points for efficiency. ENSURE the following rules:
+    - Address all gaps identified in the evaluation
+    - Provide actionable sales intelligence insights
+    - Include proper source attribution for new information
 
     **TOKEN EFFICIENCY:**
     - Focus on facts and data points
-    - Avoid lengthy descriptions
+    - Avoid lengthy descriptions except for details about people
     - Update existing research categories only
-    - Maximum 800 words for gap-filling research
     """,
     tools=[google_search],
     output_key="gap_fill_research",
@@ -430,33 +769,101 @@ organizational_report_composer = LlmAgent(
     name="organizational_report_composer",
     description="Expert business intelligence report writer with efficient content synthesis.",
     instruction="""
-    Transform structured research data into a professional markdown organizational intelligence report.
+        Transform structured research data into a professional markdown organizational intelligence report.
 
-    **INPUT DATA:**
-    - Compact research data: `{compact_research_data}`
-    - Report structure: `{report_sections}`
-    - Citation sources: `{sources}`
-    - Gap-fill research: `{gap_fill_research}` (if available)
+        **INPUT DATA:**
+        - Compact research data: `{compact_research_data}`
+        - Report structure: `{report_sections}`
+        - Citation sources: `{sources}`
+        - Gap-fill research: `{gap_fill_research}` (if available)
 
-    **REPORT COMPOSITION:**
-    1. Use the structured research data to populate each section
-    2. Maintain professional tone and comprehensive coverage
-    3. Include proper citations using `<cite source="src-ID" />` format
-    4. Focus on actionable business intelligence
+        ### REPORT COMPOSITION STANDARDS
 
-    **EFFICIENCY REQUIREMENTS:**
-    - Use structured research data efficiently
-    - Avoid repetitive content
-    - Focus on high-value information
-    - Include specific metrics and data points
-    - Target 2000-2500 words for complete report
+        **1. CONTENT TRANSFORMATION:**
+        Replace ALL placeholders in the HTML template with comprehensive, well-researched content:
 
-    **CITATION PROTOCOL:**
-    - Cite all factual claims with `<cite source="src-ID" />`
-    - Use sources from the sources dictionary
-    - Place citations immediately after relevant statements
+        *Executive Summary Requirements:*
+        - Company legal name, industry, founding date, headquarters
+        - Key financial metrics (revenue, funding, employees, valuation)
+        - Primary business model and market position
+        - High-level sales opportunity assessment
+        - 3-4 key strategic insights
 
-    Generate a comprehensive yet efficient organizational intelligence report.
+        *Detailed Section Requirements:*
+        - **Company Overview:** Business model, products/services, target markets, value proposition
+        - **Financial Performance:** Revenue trends, funding history, financial health indicators
+        - **Leadership Analysis:** Executive profiles, decision-makers, organizational structure
+        - **Market Intelligence:** Competitive landscape, market position, industry dynamics
+        - **Technology Profile:** Tech stack, innovation focus, digital maturity
+        - **Strategic Developments:** Recent news, partnerships, initiatives, achievements
+        - **Risk Assessment:** Business risks, reputation factors, regulatory concerns
+        - **Sales Intelligence:** Buying signals, budget indicators, decision processes
+        - **Recommendations:** Optimal approach, timing, stakeholder targeting
+
+        **2. CITATION INTEGRATION:**
+        **CRITICAL:** Use ONLY `<cite source="src-ID_NUMBER" />` format for citations
+        - Cite ALL factual claims, financial data, and specific information
+        - Place citations immediately after the relevant statement
+        - Cite leadership information and organizational details
+        - Cite financial metrics and market data
+        - Cite recent developments and strategic information
+
+        **3. CONTENT QUALITY STANDARDS:**
+
+        *Objectivity & Balance:*
+        - Present both positive and negative findings
+        - Include competitive challenges alongside advantages
+        - Note risks and opportunities equally
+        - Provide evidence-based analysis without bias
+
+        *Specificity & Detail:*
+        - Include specific figures, dates, and metrics
+        - Name key executives and their backgrounds
+        - Detail recent developments with timeframes
+        - Provide concrete examples and case studies
+
+        *Sales Intelligence Focus:*
+        - Highlight decision-maker identification
+        - Emphasize buying signals and opportunity indicators
+        - Include budget and financial capacity insights
+        - Provide actionable approach recommendations
+
+        *Professional Presentation:*
+        - Use appropriate HTML styling classes from the template
+        - Structure information with clear headings and subheadings
+        - Employ data cards for metrics and key figures
+        - Use highlight boxes for critical insights
+
+        **4. SPECIALIZED SECTION GUIDANCE:**
+
+        *Financial Performance Section:*
+        - Populate data cards with specific metrics
+        - Include revenue figures, funding rounds, valuation data
+        - Show growth trends and financial stability indicators
+        - Use .financial-metrics class for highlighting
+
+        *Risk Assessment Section:*
+        - Use .risk-warning class for serious concerns
+        - Balance risks with mitigation factors
+        - Include regulatory, market, and operational risks
+        - Provide context for risk evaluation
+
+        *Sales Intelligence Section:*
+        - Use .key-insights class for critical sales information
+        - Detail buying signals and opportunity timing
+        - Include decision-maker mapping and influence analysis
+        - Provide budget and procurement insights
+
+        **5. FINAL QUALITY REQUIREMENTS:**
+        - NO placeholder text should remain in final output
+        - ALL sections must be populated with relevant content
+        - Citations must be properly formatted and comprehensive
+        - Report must be professionally structured and complete
+        - Content must be actionable for sales strategy development
+
+        **IMPORTANT:** Your output will be processed by the HTML callback to generate the final styled report. Ensure all content is complete and properly cited.
+
+        Generate a comprehensive organizational intelligence report that enables informed strategic sales decision-making.
     """,
     output_key="organizational_intelligence_report",
     after_agent_callback=citation_replacement_callback,
